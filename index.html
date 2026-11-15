@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f2efe7">
+  <title>Strata — Signal Studio</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23171d18'/%3E%3Cpath d='M7 21.5 16 5l9 16.5L16 27 7 21.5Z' fill='none' stroke='%23d9ff4f' stroke-width='1.6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="Strata home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M7 21.5 16 5l9 16.5L16 27 7 21.5Z" stroke="currentColor" stroke-width="1.6"/>
+            <path d="m7 21.5 9-5.2 9 5.2M16 5v11.3" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </span>
+        <span><strong>STRATA</strong><small>signal studio</small></span>
+      </a>
+
+      <div class="side-section">
+        <span class="side-label">Workspace</span>
+        <nav class="side-nav" aria-label="Workspace">
+          <button class="nav-item is-active">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M3 10.5 10 4l7 6.5M5.5 9v7h9V9" stroke="currentColor" stroke-width="1.4"/></svg>
+            Overview
+            <span class="nav-count">04</span>
+          </button>
+          <button class="nav-item">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M3.5 5.5h13v10h-13zM3.5 8.5h13M7 5.5v10" stroke="currentColor" stroke-width="1.4"/></svg>
+            Datasets
+          </button>
+          <button class="nav-item">
+            <svg viewBox="0 0 20 20" fill="none"><path d="m4 14 4-4 3 2 5-6M13.5 6H16v2.5" stroke="currentColor" stroke-width="1.4"/></svg>
+            Annotations
+            <span class="nav-dot"></span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="side-section saved-side">
+        <span class="side-label">Saved views</span>
+        <div class="saved-list" id="savedList">
+          <p class="empty-copy">No saved views yet.<br>Capture a working state to reuse it.</p>
+        </div>
+      </div>
+
+      <div class="side-footer">
+        <div class="avatar">AL</div>
+        <div><strong>Alex Liu</strong><small>Analyst workspace</small></div>
+        <button class="icon-button tiny" aria-label="Settings">
+          <svg viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="2.3" stroke="currentColor" stroke-width="1.3"/><path d="M9 2.5v1.7M9 13.8v1.7M2.5 9h1.7M13.8 9h1.7M4.4 4.4l1.2 1.2M12.4 12.4l1.2 1.2M13.6 4.4l-1.2 1.2M5.6 12.4l-1.2 1.2" stroke="currentColor" stroke-width="1.3"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div class="breadcrumb">
+          <span>Workspace</span><i>/</i><strong>Signal overview</strong>
+        </div>
+        <div class="top-actions">
+          <span class="saved-status"><i></i><span id="saveStatus">Draft</span></span>
+          <button class="button ghost" id="undoBtn" disabled title="Undo (Ctrl/Cmd+Z)">
+            <svg viewBox="0 0 18 18" fill="none"><path d="M6.2 5 3 8.2l3.2 3.2M3.2 8.2h7.2a4 4 0 0 1 0 8H8" stroke="currentColor" stroke-width="1.5"/></svg>
+            Undo
+          </button>
+          <button class="button ghost" id="saveBtn">
+            <svg viewBox="0 0 18 18" fill="none"><path d="M4 3.5h8.5L15 6v8.5H4zM6.5 3.5v4h5v-4M6.5 14.5v-4h5v4" stroke="currentColor" stroke-width="1.35"/></svg>
+            Save view
+          </button>
+          <button class="button ghost" id="captureBtn">
+            <svg viewBox="0 0 18 18" fill="none"><rect x="3" y="5.5" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.4"/><circle cx="9" cy="10" r="2.3" stroke="currentColor" stroke-width="1.4"/><path d="M6.5 5.5 7.7 3.6h2.6l1.2 1.9" stroke="currentColor" stroke-width="1.4"/></svg>
+            Snapshot
+          </button>
+          <button class="button primary" id="exportBtn">
+            <svg viewBox="0 0 18 18" fill="none"><path d="M9 2.8v9M5.8 8.7 9 12l3.2-3.3M3.5 14.5h11" stroke="currentColor" stroke-width="1.5"/></svg>
+            Export SVG
+          </button>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="page-heading">
+          <div>
+            <div class="eyebrow"><span class="live-dot"></span> Performance observatory <span class="eyebrow-rule"></span> FY 2026</div>
+            <h1>Signal overview<span class="title-period">.</span></h1>
+            <p>Every mark is generated in code. Hover the plot to inspect values, missing intervals, and layer order.</p>
+          </div>
+          <div class="heading-tools">
+            <label class="select-wrap">
+              <span>Sample</span>
+              <select id="sampleSelect" aria-label="Sample dataset">
+                <option value="default">Default sample</option>
+                <option value="sparse">Sparse input</option>
+                <option value="extreme">Extreme values</option>
+              </select>
+            </label>
+            <button class="icon-button" id="resetBtn" title="Reset chart controls" aria-label="Reset chart controls">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M4.2 7.4A6.5 6.5 0 1 1 3.8 12M4.2 3.8v3.8h3.7" stroke="currentColor" stroke-width="1.5"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="chart-card" aria-label="Chart preview">
+          <header class="chart-header">
+            <div>
+              <span class="card-kicker">ADJUSTED PERFORMANCE / USD K</span>
+              <h2>Net performance</h2>
+              <p id="chartSubtitle">8 intervals · 3 series · 2 missing values</p>
+            </div>
+            <div class="chart-header-right">
+              <div class="domain-chip">
+                <span>Y DOMAIN</span>
+                <strong id="axisRange">−49 – 104</strong>
+              </div>
+              <button class="round-button" id="pauseBtn" title="Pause animation" aria-label="Pause animation">
+                <svg class="pause-icon" viewBox="0 0 20 20" fill="none"><path d="M7 5v10M13 5v10" stroke="currentColor" stroke-width="1.8"/></svg>
+                <svg class="play-icon" viewBox="0 0 20 20" fill="none"><path d="M7 4.8 15 10l-8 5.2V4.8Z" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="legend" id="legend" aria-label="Series legend"></div>
+
+          <div class="chart-stage" id="chartStage">
+            <canvas id="chartCanvas" aria-label="Canvas line, bar, and scatter chart"></canvas>
+            <div class="chart-error" id="chartError" role="alert" hidden>
+              <span class="error-icon">!</span>
+              <div><strong>Invalid chart parameters</strong><p id="chartErrorText"></p></div>
+            </div>
+            <div class="paused-pill" id="pausedPill" hidden><i></i> Animation paused <span id="pausedClock">0 ms</span></div>
+            <div class="tooltip" id="tooltip" hidden></div>
+            <div class="stage-hint">HOVER TO INSPECT · MISSING VALUES BREAK THE LINE</div>
+          </div>
+
+          <footer class="chart-footer">
+            <div class="type-switch" role="group" aria-label="Chart type">
+              <button data-type="line" class="is-active">
+                <svg viewBox="0 0 18 18" fill="none"><path d="m3 12 4-4 3 2 5-6" stroke="currentColor" stroke-width="1.5"/></svg>Line
+              </button>
+              <button data-type="bar">
+                <svg viewBox="0 0 18 18" fill="none"><path d="M3.5 14.5v-4h3v4M7.5 14.5v-8h3v8M11.5 14.5v-6h3v6" stroke="currentColor" stroke-width="1.3"/></svg>Bar
+              </button>
+              <button data-type="scatter">
+                <svg viewBox="0 0 18 18" fill="none"><circle cx="5" cy="12" r="1.6" stroke="currentColor" stroke-width="1.2"/><circle cx="9" cy="7" r="1.6" stroke="currentColor" stroke-width="1.2"/><circle cx="13.5" cy="10" r="1.6" stroke="currentColor" stroke-width="1.2"/></svg>Scatter
+              </button>
+            </div>
+            <div class="footer-note"><span class="status-dot"></span><span id="renderStatus">Canvas renderer ready</span></div>
+            <div class="footer-actions">
+              <button class="text-button" id="zoomOutBtn" aria-label="Zoom out">−</button>
+              <span class="zoom-label"><span id="zoomValue">100</span>%</span>
+              <button class="text-button" id="zoomInBtn" aria-label="Zoom in">+</button>
+              <span class="footer-divider"></span>
+              <span class="frame-count" id="frameCount">FRAME 0000</span>
+            </div>
+          </footer>
+        </section>
+
+        <section class="lower-grid" aria-label="Chart audit">
+          <article class="audit-card">
+            <div class="audit-head">
+              <div>
+                <span class="card-kicker dark">RENDER AUDIT</span>
+                <h3>Preview = state = export</h3>
+              </div>
+              <button class="button dark-small" id="runAuditBtn">Run full audit</button>
+            </div>
+            <div class="audit-metrics">
+              <div><span>Objects</span><strong id="objectCount">0</strong></div>
+              <div><span>Geometry</span><strong id="geometryDigest">—</strong></div>
+              <div><span>Preview hash</span><strong id="previewHash">—</strong></div>
+              <div><span>Last audit</span><strong id="auditStatus" class="is-idle">Not run</strong></div>
+            </div>
+            <div class="audit-log" id="auditLog">Three scenarios plus pause, transform, occlusion and reload checks are available. Run the suite to validate the actual canvas output.</div>
+          </article>
+
+          <article class="layers-card">
+            <div class="audit-head compact">
+              <div><span class="card-kicker dark">LAYER ORDER</span><h3>Stable by design</h3></div>
+              <span class="lock-badge"><svg viewBox="0 0 14 14" fill="none"><rect x="3" y="6" width="8" height="5.5" rx="1" stroke="currentColor"/><path d="M4.8 6V4.7a2.2 2.2 0 0 1 4.4 0V6" stroke="currentColor"/></svg>Locked</span>
+            </div>
+            <ol class="layer-list" id="layerList">
+              <li><span>01</span>Grid + axes<i>z 10</i></li>
+              <li><span>02</span>Series marks<i>z 20</i></li>
+              <li><span>03</span>Point labels<i>z 30</i></li>
+              <li><span>04</span>Hover overlay<i>z 40</i></li>
+            </ol>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <aside class="inspector">
+      <div class="inspector-head">
+        <span class="card-kicker dark">CONTROL DECK</span>
+        <h2>Chart settings</h2>
+        <p>Changes are tracked. Undo restores the previous parameter set.</p>
+      </div>
+
+      <div class="inspector-scroll">
+        <section class="control-group">
+          <div class="control-title"><span>Axis domain</span><button class="switch" id="domainAuto" role="switch" aria-checked="true"><i></i><span>Auto</span></button></div>
+          <div class="range-inputs">
+            <label><span>Minimum</span><input id="domainMin" type="number" step="1" value="-49" disabled></label>
+            <label><span>Maximum</span><input id="domainMax" type="number" step="1" value="104" disabled></label>
+          </div>
+          <p class="field-help">Auto-domain follows the visible series and always includes zero for bars.</p>
+        </section>
+
+        <section class="control-group">
+          <div class="control-title"><span>View transform</span><span class="value-chip" id="rotationValue">0°</span></div>
+          <label class="slider-field">
+            <span><b>Zoom</b><output id="zoomOutput">100%</output></span>
+            <input id="zoomRange" type="range" min="90" max="112" value="100">
+          </label>
+          <label class="slider-field">
+            <span><b>Rotation</b><output id="rotateOutput">0°</output></span>
+            <input id="rotateRange" type="range" min="-6" max="6" value="0">
+          </label>
+        </section>
+
+        <section class="control-group">
+          <div class="control-title"><span>Appearance</span><span class="value-chip" id="opacityValue">92%</span></div>
+          <label class="slider-field">
+            <span><b>Mark opacity</b><output id="opacityOutput">92%</output></span>
+            <input id="opacityRange" type="range" min="35" max="100" value="92">
+          </label>
+          <div class="toggle-row">
+            <label class="check-field"><input id="gridToggle" type="checkbox" checked><i></i><span>Grid lines</span></label>
+            <label class="check-field"><input id="pointToggle" type="checkbox" checked><i></i><span>Point labels</span></label>
+          </div>
+        </section>
+
+        <section class="control-group">
+          <div class="control-title"><span>Series visibility</span><span class="value-chip" id="seriesCount">3 / 3</span></div>
+          <div class="series-controls" id="seriesControls"></div>
+          <p class="field-help">Axis bounds and legend ranges update together. At least one series stays visible.</p>
+        </section>
+
+        <section class="control-group scenarios-group">
+          <div class="control-title"><span>Test scenarios</span></div>
+          <div class="scenario-buttons">
+            <button data-scenario="default"><i class="scenario-dot normal"></i><span><b>Default</b><small>balanced sample</small></span></button>
+            <button data-scenario="extreme"><i class="scenario-dot hot"></i><span><b>Extreme</b><small>long labels + scale</small></span></button>
+            <button data-scenario="invalid"><i class="scenario-dot error"></i><span><b>Invalid</b><small>clear fallback state</small></span></button>
+          </div>
+        </section>
+      </div>
+
+      <div class="inspector-foot">
+        <span class="live-dot"></span>
+        <div><strong>Deterministic renderer</strong><small>Same state → same geometry → same pixels</small></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "strata-signal-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/verify.mjs",
+    "serve": "python3 -m http.server 4173"
+  },
+  "devDependencies": {
+    "playwright": "1.65.1"
+  }
+}
