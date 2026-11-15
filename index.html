@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>CANLINE 罐头灌装中控台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1511'/%3E%3Crect x='7' y='9' width='18' height='16' rx='2' fill='none' stroke='%23c8f36a' stroke-width='2'/%3E%3Cpath d='M7 15h18M7 21h18' stroke='%23c8f36a' stroke-width='1.5' opacity='.7'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient-grid" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <div>
+          <div class="brand-name">CANLINE <b>/04</b></div>
+          <div class="brand-sub">连续灌装与封盖中控台</div>
+        </div>
+      </div>
+
+      <div class="line-identity">
+        <span class="eyebrow">当前批次</span>
+        <strong id="headerBatchId">BATCH-001</strong>
+        <span class="divider-dot"></span>
+        <span id="headerPlan">180 ×4 → 330 ×4 → 500 ×4</span>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="live-pill" id="linePill"><i></i><span>待机</span></div>
+        <button class="sim-speed" id="speedToggle" type="button" title="切换模拟速度">1×</button>
+        <button class="icon-button" id="soundToggle" type="button" aria-label="开关声音" title="开关机械音">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2-3.74v7.48A4.5 4.5 0 0 0 16.5 12z"/><path d="M14.5 3.6v2.1a7 7 0 0 1 0 12.6v2.1a9 9 0 0 0 0-16.8z"/></svg>
+        </button>
+        <div class="clock">
+          <span class="eyebrow">班次 02</span>
+          <strong id="clock">03:12:48</strong>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <aside class="panel control-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">LINE CONTROL</span>
+            <h1>生产控制</h1>
+          </div>
+          <span class="panel-code">P-01</span>
+        </div>
+
+        <section class="control-section recipe-section">
+          <div class="section-title">
+            <span>灌装规格</span>
+            <span class="section-hint" id="recipeHint">计划 180 ml</span>
+          </div>
+          <div class="spec-row" id="specButtons">
+            <button class="spec-card active" type="button" data-spec="180">
+              <span class="can-glyph slim"></span>
+              <strong>180</strong><small>ml · 细罐</small>
+            </button>
+            <button class="spec-card" type="button" data-spec="330">
+              <span class="can-glyph medium"></span>
+              <strong>330</strong><small>ml · 标准</small>
+            </button>
+            <button class="spec-card" type="button" data-spec="500">
+              <span class="can-glyph large"></span>
+              <strong>500</strong><small>ml · 大罐</small>
+            </button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <div class="section-title">
+            <span>运行参数</span>
+            <span class="section-hint">实时闭环</span>
+          </div>
+
+          <label class="slider-control" for="feedSpeed">
+            <span class="slider-top">
+              <span>供料速度 <small>P-01</small></span>
+              <output id="feedSpeedValue">26.0 <em>罐/分</em></output>
+            </span>
+            <input id="feedSpeed" type="range" min="12" max="40" step="0.5" value="26">
+            <span class="range-meta"><span>12</span><b>推荐 20–30</b><span>40</span></span>
+          </label>
+
+          <label class="slider-control" for="fillLevel">
+            <span class="slider-top">
+              <span>灌装液位 <small>F-01</small></span>
+              <output id="fillLevelValue">94.0 <em>%</em></output>
+            </span>
+            <input id="fillLevel" type="range" min="80" max="102" step="0.5" value="94">
+            <span class="range-meta"><span>80</span><b>溢流 98.0%</b><span>102</span></span>
+          </label>
+
+          <label class="slider-control" for="capPressure">
+            <span class="slider-top">
+              <span>压盖压力 <small>C-02</small></span>
+              <output id="capPressureValue">2.70 <em>bar</em></output>
+            </span>
+            <input id="capPressure" type="range" min="1" max="4" step="0.05" value="2.7">
+            <span class="range-meta"><span>1.0</span><b>漏气 1.80 bar</b><span>4.0</span></span>
+          </label>
+        </section>
+
+        <section class="control-section action-section">
+          <div class="primary-actions">
+            <button class="button primary" id="startPauseBtn" type="button">
+              <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+              <span>启动产线</span>
+            </button>
+            <button class="button secondary" id="resetBtn" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.76-4.24L13 11h7V4l-2.35 2.35z"/></svg>
+              <span>重置批次</span>
+            </button>
+          </div>
+          <button class="flush-button" id="flushBtn" type="button" disabled>
+            <span class="flush-icon">↻</span>
+            <span><strong>清空缓存</strong><small id="flushHint">切换规格时必需</small></span>
+            <kbd>F</kbd>
+          </button>
+        </section>
+
+        <section class="control-section fault-section">
+          <div class="section-title">
+            <span>故障注入</span>
+            <span class="section-hint">验证用</span>
+          </div>
+          <div class="fault-grid">
+            <button class="fault-button" type="button" data-fault="pump">
+              <span>P-01</span>泵体过载
+            </button>
+            <button class="fault-button" type="button" data-fault="cap">
+              <span>C-02</span>供盖中断
+            </button>
+            <button class="fault-button" type="button" data-fault="belt">
+              <span>T-03</span>输送卡料
+            </button>
+          </div>
+          <button class="snapshot-button" id="snapshotBtn" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3l1-2zm3 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
+            保存设备状态快照
+            <span id="snapshotCount">0</span>
+          </button>
+        </section>
+      </aside>
+
+      <section class="center-stack">
+        <div class="panel visual-panel">
+          <div class="canvas-toolbar">
+            <div class="station-legend">
+              <span><i class="dot feed"></i>F-01 灌装</span>
+              <span><i class="dot cap"></i>C-02 压盖</span>
+              <span><i class="dot inspect"></i>V-04 检测</span>
+            </div>
+            <div class="canvas-readout">
+              <span>瞬时功耗 <strong id="livePower">0.00 kW</strong></span>
+              <span class="telemetry-dot"></span>
+              <span>节拍 <strong id="liveRate">0.0 cpm</strong></span>
+            </div>
+          </div>
+
+          <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="lineCanvas" aria-label="罐头灌装产线实时动画"></canvas>
+
+            <div class="canvas-status" id="canvasStatus">
+              <span class="status-led"></span>
+              <span id="canvasStatusText">系统就绪 · 等待启动</span>
+            </div>
+
+            <div class="phase-strip" id="phaseStrip">
+              <div class="phase active" data-phase="0"><span>01</span><b>180 ml</b><small>细罐</small></div>
+              <div class="phase-connector"></div>
+              <div class="phase" data-phase="1"><span>02</span><b>330 ml</b><small>标准</small></div>
+              <div class="phase-connector"></div>
+              <div class="phase" data-phase="2"><span>03</span><b>500 ml</b><small>大罐</small></div>
+            </div>
+
+            <div class="inspection-overlay" id="inspectionOverlay" hidden>
+              <div class="overlay-kicker"><span class="blink-dot"></span> 安全暂停</div>
+              <h2>产线检查窗口</h2>
+              <p>所有关键设备已停止并记录时刻，当前批次数据保持在内存中。</p>
+              <div class="check-list">
+                <span><i>✓</i>供料泵已锁定</span>
+                <span><i>✓</i>灌装阀无滴漏</span>
+                <span><i>✓</i>压盖头泄压</span>
+                <span><i>✓</i>输送带零速</span>
+              </div>
+              <button class="button primary compact" id="resumeInspectionBtn" type="button">结束检查并继续</button>
+            </div>
+
+            <div class="changeover-overlay" id="changeoverOverlay" hidden>
+              <div class="overlay-kicker"><span class="blink-dot amber"></span> 规格切换</div>
+              <h2 id="changeoverTitle">下一规格 · 330 ml</h2>
+              <p>旧规格浆料仍在缓存管路中。请选择目标规格并清空缓存，避免混液与灌装量偏差。</p>
+              <div class="changeover-actions">
+                <button class="button primary compact" id="changeoverFlushBtn" type="button">清空缓存并换型</button>
+              </div>
+            </div>
+
+            <div class="fault-overlay" id="faultOverlay" hidden>
+              <div class="fault-content">
+                <div class="alarm-beacon"><span></span><span></span><span></span></div>
+                <div class="overlay-kicker"><span class="blink-dot red"></span> 故障停机</div>
+                <h2 id="faultTitle">压盖机供盖中断</h2>
+                <div class="fault-device-row">
+                  <span>设备</span><strong id="faultDevice">C-02 压盖机</strong>
+                  <span>触发值</span><strong id="faultValue">瓶盖供给 0 枚 / 最小 1 枚</strong>
+                </div>
+                <p id="faultDescription">供盖轨道无料，压盖头空压。设备已联锁停机。</p>
+                <div class="fault-actions">
+                  <button class="button danger-fix" id="recoverBtn" type="button">排除故障并观察</button>
+                  <button class="button ghost" id="faultResetBtn" type="button">放弃本批次</button>
+                </div>
+                <div class="inline-error" id="recoverError" hidden></div>
+              </div>
+            </div>
+
+            <div class="summary-overlay" id="summaryOverlay" hidden>
+              <div class="summary-card">
+                <div class="summary-top">
+                  <div>
+                    <div class="overlay-kicker"><span class="blink-dot green" id="summaryDot"></span><span id="summaryKicker">批次完成</span></div>
+                    <h2 id="summaryTitle">批次合格</h2>
+                  </div>
+                  <span class="lock-badge">只读归档</span>
+                </div>
+                <div class="summary-metrics">
+                  <div><span>良品</span><strong id="summaryGood">10</strong><small>罐</small></div>
+                  <div><span>废品</span><strong id="summaryReject">2</strong><small>罐</small></div>
+                  <div><span>峰值功耗</span><strong id="summaryPeak">1.94</strong><small>kW</small></div>
+                  <div><span>异常处理</span><strong id="summaryAnomalies">1</strong><small>条</small></div>
+                </div>
+                <div class="summary-reason"><span>停机原因</span><p id="summaryReason">12 罐完成 · 3 次规格换型</p></div>
+                <div class="summary-actions">
+                  <button class="button primary compact" id="summaryCompareBtn" type="button">查看批次对比</button>
+                  <button class="button secondary compact" id="summaryNewBtn" type="button">开始新批次</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="recovery-banner" id="recoveryBanner" hidden>
+              <span class="recovery-spinner"></span>
+              <div><strong>恢复观察中</strong><small id="recoveryText">固定 6.0 秒 · 正在监控状态残留</small></div>
+              <b id="recoveryCountdown">6.0s</b>
+            </div>
+          </div>
+
+          <div class="telemetry-bar">
+            <div class="telemetry-cell">
+              <span>实际液位</span><strong id="actualLevel">94.0%</strong>
+              <div class="micro-bar"><i id="levelBar" style="width:94%"></i><em style="left:98%"></em></div>
+            </div>
+            <div class="telemetry-cell">
+              <span>封盖压力</span><strong id="actualPressure">2.70 bar</strong>
+              <div class="micro-bar pressure"><i id="pressureBar" style="width:67.5%"></i><em style="left:45%"></em></div>
+            </div>
+            <div class="telemetry-cell">
+              <span>缓存液量</span><strong id="cacheLevel">0.8 L</strong>
+              <div class="micro-bar cache"><i id="cacheBar" style="width:18%"></i></div>
+            </div>
+            <div class="telemetry-cell total">
+              <span>批次产出</span><strong><b id="doneCount">0</b><small> / 12 罐</small></strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="mini-status-row">
+          <div class="mini-stat"><span class="mini-icon green">✓</span><div><small>良品</small><strong id="goodCount">0</strong></div></div>
+          <div class="mini-stat"><span class="mini-icon red">×</span><div><small>废品 / 上限</small><strong><b id="rejectCount">0</b><em> / 2</em></strong></div></div>
+          <div class="mini-stat"><span class="mini-icon amber">⌁</span><div><small>峰值功耗</small><strong><b id="peakPower">0.00</b><em> kW</em></strong></div></div>
+          <div class="mini-stat wide"><span class="mini-icon blue">◎</span><div><small>当前停机原因</small><strong id="currentReason">尚未启动</strong></div></div>
+        </div>
+      </section>
+
+      <aside class="panel batch-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">BATCH TELEMETRY</span>
+            <h2>批次监视</h2>
+          </div>
+          <span class="batch-live" id="batchLive">IDLE</span>
+        </div>
+
+        <div class="batch-hero">
+          <div class="batch-progress-ring" id="progressRing" style="--progress:0deg">
+            <div><strong id="progressCount">0</strong><span>/ 12</span></div>
+          </div>
+          <div class="batch-hero-copy">
+            <span class="eyebrow">完成进度</span>
+            <h3 id="batchPhaseLabel">180 ml · 第 1 罐</h3>
+            <p id="batchPhaseSub">4 罐后切换至 330 ml</p>
+          </div>
+        </div>
+
+        <div class="quality-track">
+          <div class="quality-track-head"><span>质量余量</span><strong id="qualityMargin">2 罐</strong></div>
+          <div class="quality-slots" id="qualitySlots">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+
+        <div class="device-health">
+          <div class="section-title"><span>设备状态</span><small>点击查看时序</small></div>
+          <div class="health-grid" id="deviceHealth"></div>
+        </div>
+
+        <div class="anomaly-section">
+          <div class="section-title">
+            <span>异常与操作审计</span>
+            <span class="audit-count" id="anomalyCount">0</span>
+          </div>
+          <div class="anomaly-list" id="anomalyList">
+            <div class="empty-state"><span>◎</span><p>暂无异常<br><small>故障注入与参数越限会记录在此</small></p></div>
+          </div>
+        </div>
+
+        <div class="recovery-record" id="recoveryRecord">
+          <span class="recovery-icon">◇</span>
+          <div><small>恢复验证</small><strong>尚未执行</strong><p>故障恢复后将进行固定窗口检查</p></div>
+        </div>
+      </aside>
+    </main>
+
+    <section class="panel console-dock">
+      <div class="console-head">
+        <div class="console-tabs" role="tablist">
+          <button class="console-tab active" data-tab="devices" type="button">设备时序 <span id="deviceEventCount">0</span></button>
+          <button class="console-tab" data-tab="batches" type="button">批次归档 <span id="batchCount">0</span></button>
+          <button class="console-tab" data-tab="snapshots" type="button">设备快照 <span id="snapshotTabCount">0</span></button>
+        </div>
+        <div class="console-note" id="consoleNote"><span class="pulse-dot"></span> 启停时刻按批次时钟记录，精度 0.1 s</div>
+      </div>
+
+      <div class="console-body">
+        <div class="console-page active" data-panel="devices">
+          <div class="timeline-wrap">
+            <div class="timeline-scale"><span>0s</span><span>10s</span><span>20s</span><span>30s</span><span>40s+</span></div>
+            <div id="deviceTimeline" class="device-timeline"></div>
+          </div>
+          <div class="event-log-wrap">
+            <div class="event-log-head"><span>启停事件</span><span>批次时刻</span></div>
+            <div class="event-log" id="eventLog"></div>
+          </div>
+        </div>
+
+        <div class="console-page" data-panel="batches">
+          <div class="batch-archive" id="batchArchive">
+            <div class="empty-archive"><span>▤</span><p>尚无已完成批次<small>选择两个只读结果可并排比较</small></p></div>
+          </div>
+          <div class="compare-panel" id="comparePanel">
+            <div class="compare-empty">
+              <span>⇄</span>
+              <p>选择两个已完成批次进行对比<small>结果归档后不可编辑</small></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="console-page" data-panel="snapshots">
+          <div class="snapshot-list" id="snapshotList">
+            <div class="empty-state horizontal"><span>▣</span><p>还没有设备快照<small>保存当前参数后可修改参数重跑</small></p></div>
+          </div>
+          <div class="scenario-panel">
+            <div class="section-title"><span>验证剧本</span><small>确定性复现</small></div>
+            <button class="scenario-button normal" type="button" data-scenario="normal"><b>正常生产</b><span>安全参数 · 完整 12 罐</span></button>
+            <button class="scenario-button fault" type="button" data-scenario="fault"><b>设备故障</b><span>运行中注入 C-02 供盖中断</span></button>
+            <button class="scenario-button limit" type="button" data-scenario="limit"><b>参数越限</b><span>液位 100.5% · 触发溢流</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
