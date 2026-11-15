@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A code-generated low-poly relic with orbit controls, material studies, and deterministic PNG export."
+    />
+    <title>Relic / Procedural Exhibit</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Relic exhibit home">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="brand-copy">
+            <strong>ATELIER / 06</strong>
+            <span>PROCEDURAL EXHIBIT</span>
+          </span>
+        </a>
+        <div class="topbar-meta">
+          <span class="meta-item">OBJ. 001</span>
+          <span class="meta-item">NO ASSET LOAD</span>
+          <span class="live-state" id="liveState">
+            <span class="live-dot"></span>
+            <span id="liveText">TURNTABLE LIVE</span>
+          </span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="stage-column" aria-label="3D exhibit preview">
+          <div class="stage-heading">
+            <div>
+              <p class="eyebrow">STUDY 01 / FACETED FORM</p>
+              <h1>THE POLYHEDRAL<br />RELIC</h1>
+            </div>
+            <div class="stage-counter">
+              <span id="facetCount">80</span>
+              <small>FACETS</small>
+            </div>
+          </div>
+
+          <div class="viewport" id="viewport">
+            <canvas
+              id="stage"
+              width="960"
+              height="640"
+              tabindex="0"
+              aria-label="Code-generated low-poly relic. Drag to orbit and scroll to zoom."
+            ></canvas>
+            <div class="corner-label corner-label--tl" aria-hidden="true">
+              <span>GEN / MESH</span>
+              <strong id="meshStatus">STABLE</strong>
+            </div>
+            <div class="corner-label corner-label--tr" aria-hidden="true">
+              <span id="cameraReadout">AZ 324° / EL 07°</span>
+              <strong>CAM 01</strong>
+            </div>
+            <div class="gesture-hint" aria-hidden="true">
+              <span class="gesture-icon">↔</span>
+              DRAG TO ORBIT
+              <span class="hint-divider"></span>
+              SCROLL TO ZOOM
+            </div>
+            <div class="error-banner" id="errorBanner" role="alert" hidden>
+              <div>
+                <strong>PARAMETER REJECTED</strong>
+                <span id="errorMessage"></span>
+              </div>
+              <button type="button" id="dismissError" aria-label="Dismiss error">CLOSE</button>
+            </div>
+          </div>
+
+          <div class="stage-footer">
+            <div class="stage-note">
+              <span class="note-rule"></span>
+              <p>Every vertex is generated from code. Two-sided normals keep the rear view readable.</p>
+            </div>
+            <div class="render-badge">
+              <span class="badge-pulse"></span>
+              <span>CANVAS 960 × 640</span>
+            </div>
+          </div>
+        </section>
+
+        <aside class="control-panel" aria-label="Exhibit controls">
+          <div class="panel-head">
+            <p class="eyebrow">CONTROL DESK</p>
+            <div class="history-actions">
+              <button class="icon-button" id="undoButton" type="button" aria-label="Undo" title="Undo (Ctrl+Z)">
+                ↶
+              </button>
+              <button class="icon-button" id="redoButton" type="button" aria-label="Redo" title="Redo (Ctrl+Shift+Z)">
+                ↷
+              </button>
+            </div>
+          </div>
+
+          <section class="control-group">
+            <div class="group-label">
+              <span>01 / MOTION</span>
+              <span class="group-value" id="motionValue">RUNNING</span>
+            </div>
+            <button class="primary-action" id="pauseButton" type="button">
+              <span class="pause-icon" id="pauseIcon" aria-hidden="true"></span>
+              <span id="pauseLabel">PAUSE TURNTABLE</span>
+              <kbd>SPACE</kbd>
+            </button>
+          </section>
+
+          <section class="control-group">
+            <div class="group-label">
+              <span>02 / MATERIAL</span>
+              <span class="group-value">2 STUDIES</span>
+            </div>
+            <div class="segmented" role="group" aria-label="Material">
+              <button type="button" data-material="bronze" aria-pressed="true">
+                <span class="swatch swatch--bronze"></span>
+                PATINA BRONZE
+              </button>
+              <button type="button" data-material="resin" aria-pressed="false">
+                <span class="swatch swatch--resin"></span>
+                LUMEN RESIN
+              </button>
+            </div>
+          </section>
+
+          <section class="control-group">
+            <div class="group-label">
+              <span>03 / LIGHTING</span>
+              <span class="group-value" id="lightValue">DAWN</span>
+            </div>
+            <div class="segmented segmented--lights" role="group" aria-label="Lighting">
+              <button type="button" data-lighting="dawn" aria-pressed="true">DAWN</button>
+              <button type="button" data-lighting="gallery" aria-pressed="false">GALLERY</button>
+            </div>
+          </section>
+
+          <section class="control-group">
+            <div class="group-label">
+              <span>04 / VIEW</span>
+              <span class="group-value">FINE TUNE</span>
+            </div>
+            <label class="range-row" for="yawRange">
+              <span>AZIMUTH</span>
+              <input id="yawRange" type="range" min="-180" max="180" step="1" value="-36" />
+              <output id="yawOutput">-36°</output>
+            </label>
+            <label class="range-row" for="pitchRange">
+              <span>ELEVATION</span>
+              <input id="pitchRange" type="range" min="-70" max="70" step="1" value="7" />
+              <output id="pitchOutput">07°</output>
+            </label>
+            <label class="range-row" for="zoomRange">
+              <span>ZOOM</span>
+              <input id="zoomRange" type="range" min="0.55" max="2.2" step="0.01" value="1" />
+              <output id="zoomOutput">1.00×</output>
+            </label>
+          </section>
+
+          <section class="control-group preset-group">
+            <div class="group-label">
+              <span>05 / PRESET</span>
+              <span class="group-value" id="savedCount">0 SAVED</span>
+            </div>
+            <div class="preset-row">
+              <input id="presetName" type="text" maxlength="32" value="Signature Study" aria-label="Preset name" />
+              <button class="square-button" id="savePreset" type="button" title="Save current parameters">
+                SAVE
+              </button>
+            </div>
+            <div class="preset-row">
+              <select id="presetSelect" aria-label="Saved presets">
+                <option value="">Select a saved study</option>
+              </select>
+              <button class="square-button" id="loadPreset" type="button">LOAD</button>
+            </div>
+          </section>
+
+          <div class="panel-actions">
+            <button class="secondary-action" id="importButton" type="button">IMPORT JSON</button>
+            <button class="export-action" id="exportButton" type="button">
+              <span>EXPORT PNG</span>
+              <span aria-hidden="true">↓</span>
+            </button>
+          </div>
+          <p class="panel-footnote">Paused views export at the exact current camera and material state.</p>
+        </aside>
+      </main>
+    </div>
+
+    <dialog class="import-dialog" id="importDialog">
+      <form method="dialog" id="importForm">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow">PARAMETER INPUT</p>
+            <h2>Import view state</h2>
+          </div>
+          <button class="icon-button" value="cancel" aria-label="Close">×</button>
+        </div>
+        <p class="dialog-copy">
+          Paste a JSON object. Unknown keys, non-finite numbers, or out-of-range values are rejected
+          without changing the current scene.
+        </p>
+        <textarea id="importJson" spellcheck="false" aria-label="View parameters JSON">{
+  "material": "resin",
+  "lighting": "gallery",
+  "yaw": 24,
+  "pitch": -12,
+  "zoom": 1.35,
+  "autoRotate": false
+}</textarea>
+        <p class="dialog-error" id="importError" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button class="secondary-action" id="cancelImport" type="button">CANCEL</button>
+          <button class="export-action" id="applyImport" type="submit">APPLY PARAMETERS</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
