@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#11110f" />
+    <meta
+      name="description"
+      content="GRAIN/16 — a four-voice, sixteen-step Web Audio drum machine."
+    />
+    <title>GRAIN/16 — Web Audio Drum Machine</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2311110f'/%3E%3Cpath d='M8 22V10h4v12zm6 0V6h4v16zm6 0v-8h4v8z' fill='%23d8ff52'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div class="ambient" aria-hidden="true"></div>
+    <div id="app" class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="GRAIN 16 首页">
+          <span class="brand-glyph" aria-hidden="true">
+            <i></i><i></i><i></i><i></i>
+          </span>
+          <span class="brand-copy">
+            <span class="brand-name">GRAIN<span>/16</span></span>
+            <span class="brand-sub">FOUR VOICE RHYTHM ENGINE</span>
+          </span>
+        </a>
+
+        <div class="transport" aria-label="走带控制">
+          <button id="stopBtn" class="transport-btn" type="button" title="停止 (Space)">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="1"/></svg>
+            <span>停止</span>
+          </button>
+          <button id="playBtn" class="transport-btn transport-btn--play" type="button" title="播放 (Space)">
+            <svg class="icon-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.8 13 8l-9 5.2z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h4v10H3zm6 0h4v10H9z"/></svg>
+            <span id="playLabel">播放</span>
+          </button>
+          <button id="replayBtn" class="transport-btn" type="button" title="从头重播">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h6a5 5 0 1 1-4.7 3.3l1.7.9A3 3 0 1 0 9 5H6v3L2 4.5z"/></svg>
+            <span>重播</span>
+          </button>
+        </div>
+
+        <div class="tempo-block">
+          <span class="micro-label">TEMPO</span>
+          <div class="tempo-input-wrap">
+            <button id="bpmDown" class="step-nudge" type="button" aria-label="速度减一">−</button>
+            <input id="bpmInput" class="bpm-input" type="number" min="40" max="220" value="112" aria-label="每分钟节拍数" />
+            <button id="bpmUp" class="step-nudge" type="button" aria-label="速度加一">+</button>
+          </div>
+          <span class="clock-state"><i></i> AUDIO CLOCK</span>
+        </div>
+
+        <div class="master-block">
+          <div class="master-head">
+            <span class="micro-label">MASTER</span>
+            <output id="masterOut" for="masterVolume">80</output>
+          </div>
+          <input id="masterVolume" class="slider slider--master" type="range" min="0" max="100" step="1" value="80" aria-label="主音量" />
+        </div>
+
+        <div class="patch-actions">
+          <button id="resetBtn" class="text-btn" type="button">重置参数</button>
+          <button id="saveBtn" class="text-btn text-btn--accent" type="button">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h10l2 2v10H2zm3 1v4h6V3zm0 6v4h6V9z"/></svg>
+            保存
+          </button>
+        </div>
+      </header>
+
+      <section class="telemetry" aria-label="实时音频遥测">
+        <article class="metric metric--freq">
+          <div class="metric-title"><span>FREQUENCY</span><span class="metric-source">FFT</span></div>
+          <div class="metric-value"><strong id="freqValue">—</strong><span>Hz</span></div>
+          <div class="metric-foot"><span id="freqBand">等待音频</span><span id="freqNote">—</span></div>
+          <canvas id="freqSpark" class="metric-spark" width="180" height="28" aria-hidden="true"></canvas>
+        </article>
+        <article class="metric metric--stereo">
+          <div class="metric-title"><span>STEREO FIELD</span><span class="metric-source">L / R</span></div>
+          <div class="stereo-pair">
+            <div><span>L</span><strong id="leftValue">−∞</strong></div>
+            <div class="stereo-balance"><i id="stereoBalance"></i></div>
+            <div><span>R</span><strong id="rightValue">−∞</strong></div>
+          </div>
+          <div class="metric-foot"><span id="stereoState">无信号</span><span>dBFS</span></div>
+        </article>
+        <article class="metric metric--delay">
+          <div class="metric-title"><span>LATENCY</span><span class="metric-source">I/O</span></div>
+          <div class="metric-value"><strong id="delayValue">—</strong><span>ms</span></div>
+          <div class="metric-foot"><span id="delayState">尚未启动</span><span class="delay-dot"></span></div>
+        </article>
+        <article class="metric metric--peak">
+          <div class="metric-title"><span>PEAK</span><span class="metric-source">PRE-OUT</span></div>
+          <div class="metric-value"><strong id="peakValue">−∞</strong><span>dBFS</span></div>
+          <div class="metric-foot"><span id="headroomState">—</span><span id="peakHold">HOLD −∞</span></div>
+          <div class="peak-track"><i id="peakFill"></i><b id="peakHoldMark"></b></div>
+        </article>
+      </section>
+
+      <main class="workspace">
+        <section class="sequencer-panel panel">
+          <header class="panel-head sequencer-head">
+            <div>
+              <span class="eyebrow">01 / PATTERN</span>
+              <h1>十六步音序器</h1>
+            </div>
+            <div class="sequencer-meta">
+              <span><i class="key-hint">CLICK</i> 开关步进</span>
+              <span><i class="key-hint">SELECT</i> 右侧编辑力度 / 概率</span>
+              <span class="position-readout"><b id="positionStep">01</b><em>/ 16</em></span>
+            </div>
+          </header>
+          <div class="canvas-wrap">
+            <canvas id="sequencerCanvas" aria-label="四轨十六步音序网格"></canvas>
+          </div>
+          <div class="track-strip" id="trackStrip" aria-label="音轨快捷选择"></div>
+          <footer class="sequencer-foot">
+            <div class="legend">
+              <span><i class="legend-fill"></i>力度高度</span>
+              <span><i class="legend-prob">P</i>触发概率</span>
+              <span><i class="legend-play"></i>播放头</span>
+            </div>
+            <div class="clock-readout">
+              <span>STEP CLOCK</span>
+              <b id="stepClock">16TH · 133.93 ms</b>
+            </div>
+          </footer>
+        </section>
+
+        <aside class="sidebar">
+          <section class="panel inspector" aria-label="步进与音轨参数">
+            <header class="panel-head panel-head--compact">
+              <div>
+                <span class="eyebrow">02 / EDIT</span>
+                <h2 id="inspectorTitle">KICK · 01</h2>
+              </div>
+              <button id="stepToggle" class="mini-toggle is-on" type="button"><i></i><span>ON</span></button>
+            </header>
+            <div class="step-edit">
+              <label class="control-row" for="velocityInput">
+                <span class="control-name">力度 <em>VELOCITY</em></span>
+                <output id="velocityOut" for="velocityInput">112</output>
+              </label>
+              <input id="velocityInput" class="slider" type="range" min="1" max="127" step="1" value="112" />
+              <label class="control-row" for="probabilityInput">
+                <span class="control-name">概率 <em>PROBABILITY</em></span>
+                <output id="probabilityOut" for="probabilityInput">100%</output>
+              </label>
+              <input id="probabilityInput" class="slider" type="range" min="0" max="100" step="1" value="100" />
+            </div>
+            <div class="divider"><span>VOICE</span></div>
+            <div class="track-tabs" id="trackTabs" role="tablist" aria-label="选择音轨"></div>
+            <div class="voice-controls">
+              <label class="knob-control">
+                <span class="control-name">音高 <em>TUNE</em></span>
+                <span class="knob-wrap">
+                  <input id="tuneInput" class="knob" type="range" min="30" max="90" step="1" value="52" />
+                  <i class="knob-face"></i>
+                </span>
+                <output id="tuneOut" for="tuneInput">52 Hz</output>
+              </label>
+              <label class="knob-control">
+                <span class="control-name">衰减 <em>DECAY</em></span>
+                <span class="knob-wrap">
+                  <input id="decayInput" class="knob" type="range" min="30" max="900" step="5" value="420" />
+                  <i class="knob-face"></i>
+                </span>
+                <output id="decayOut" for="decayInput">420 ms</output>
+              </label>
+              <label class="knob-control">
+                <span class="control-name">声像 <em>PAN</em></span>
+                <span class="knob-wrap">
+                  <input id="panInput" class="knob" type="range" min="-100" max="100" step="1" value="0" />
+                  <i class="knob-face"></i>
+                </span>
+                <output id="panOut" for="panInput">CENTER</output>
+              </label>
+              <label class="knob-control">
+                <span class="control-name">电平 <em>LEVEL</em></span>
+                <span class="knob-wrap">
+                  <input id="levelInput" class="knob" type="range" min="0" max="120" step="1" value="90" />
+                  <i class="knob-face"></i>
+                </span>
+                <output id="levelOut" for="levelInput">90%</output>
+              </label>
+            </div>
+            <div class="voice-actions">
+              <button id="muteBtn" class="pill-btn" type="button"><i></i><span>静音</span></button>
+              <button id="auditionBtn" class="pill-btn" type="button">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2zm9 .2a3 3 0 0 1 0 3.6l1 1.2a4.5 4.5 0 0 0 0-6z"/></svg>
+                试听
+              </button>
+            </div>
+          </section>
+
+          <section class="panel meter-panel">
+            <header class="panel-head panel-head--compact">
+              <div>
+                <span class="eyebrow">03 / OUTPUT</span>
+                <h2>实时电平</h2>
+              </div>
+              <span class="meter-rate">60 FPS</span>
+            </header>
+            <canvas id="meterCanvas" class="meter-canvas" aria-label="立体声输出电平"></canvas>
+          </section>
+
+          <section class="panel patch-panel">
+            <header class="panel-head panel-head--compact">
+              <div>
+                <span class="eyebrow">04 / PATCH</span>
+                <h2>保存与导出</h2>
+              </div>
+              <span id="patchDirty" class="save-state">UNSAVED</span>
+            </header>
+            <label class="field-label" for="patchName">补丁名称</label>
+            <div class="patch-name-row">
+              <input id="patchName" class="text-input" type="text" value="NIGHT SHIFT" maxlength="28" spellcheck="false" />
+              <button id="patchMenuBtn" class="square-btn" type="button" aria-label="打开已保存补丁">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12v10H2zm2 2v2h8V5zm0 4v2h5V9z"/></svg>
+              </button>
+            </div>
+            <div id="patchDrawer" class="patch-drawer" hidden>
+              <label class="field-label" for="patchSelect">本机补丁</label>
+              <div class="drawer-row">
+                <select id="patchSelect" class="select-input"></select>
+                <button id="loadBtn" class="square-btn square-btn--accent" type="button">载入</button>
+              </div>
+            </div>
+            <div class="export-row">
+              <label class="field-label" for="barsSelect">导出长度</label>
+              <select id="barsSelect" class="select-input">
+                <option value="1">1 小节 · 16 步</option>
+                <option value="2" selected>2 小节 · 32 步</option>
+                <option value="4">4 小节 · 64 步</option>
+              </select>
+            </div>
+            <button id="exportBtn" class="export-btn" type="button">
+              <span>
+                <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v9m0 0 3-3m-3 3L6 8M3 13v3h12v-3"/></svg>
+                导出 WAV
+              </span>
+              <small id="exportMeta">STEREO · 48 kHz · 16-bit</small>
+            </button>
+            <div id="preflight" class="preflight" aria-live="polite">
+              <span class="preflight-item"><i></i>静音</span>
+              <span class="preflight-item"><i></i>削波</span>
+              <span class="preflight-item"><i></i>双声道</span>
+              <span class="preflight-result">待检查</span>
+            </div>
+            <canvas id="waveCanvas" class="wave-canvas" width="640" height="120" aria-label="最近导出波形"></canvas>
+            <div id="exportSignature" class="export-signature">
+              <span>LAST RENDER</span><b>—</b><em>尚无导出</em>
+            </div>
+          </section>
+
+          <section class="panel audit-panel">
+            <header class="panel-head panel-head--compact">
+              <div>
+                <span class="eyebrow">05 / PROOF</span>
+                <h2>声学验证</h2>
+              </div>
+              <span class="audit-badge" id="auditBadge">NOT RUN</span>
+            </header>
+            <p class="audit-copy">离线重渲染音频，对比声道能量、低频峰值、节拍间距与重载后文件签名，而非读取界面数字。</p>
+            <button id="auditBtn" class="audit-btn" type="button">
+              <span class="audit-btn-icon">↗</span>
+              运行全部验证
+            </button>
+            <div id="auditResults" class="audit-results"></div>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="statusbar">
+        <div class="status-main">
+          <span class="status-led" id="statusLed"></span>
+          <span id="statusText">等待启动 · 点击播放以启用实时音频</span>
+        </div>
+        <div class="status-side">
+          <span id="sampleRateText">—</span>
+          <span class="status-sep"></span>
+          <span id="voiceCount">0 VOICES</span>
+          <span class="status-sep"></span>
+          <span>WEB AUDIO / LIVE SYNTHESIS</span>
+        </div>
+      </footer>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="modal" class="modal" hidden>
+      <div class="modal-card">
+        <span class="eyebrow" id="modalEyebrow">AUDIO RENDER</span>
+        <h3 id="modalTitle">正在离线渲染</h3>
+        <p id="modalBody">保留所有音轨与概率设置，并检查静音、削波和双声道。</p>
+        <div class="modal-progress"><i id="modalProgress"></i></div>
+        <button id="modalClose" class="pill-btn" type="button">关闭</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
