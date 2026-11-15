@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="潮汐渔港中的小船维修件运送任务：固定种子、惯性驾驶、检查点恢复。"
+    />
+    <title>潮汐修理航道 · Tidal Repair Run</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23082023'/%3E%3Cpath d='M5 19c4 0 4-4 8-4s4 4 8 4 4-4 6-4M5 24c4 0 4-4 8-4s4 4 8 4 4-4 6-4' fill='none' stroke='%2358e0c1' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">⌁</span>
+          <div>
+            <p class="eyebrow">HARBOR LOGISTICS · 07</p>
+            <h1>潮汐修理航道</h1>
+          </div>
+        </div>
+        <div class="route" aria-label="任务顺序">
+          <span class="route-node active" data-route="1">01</span>
+          <span class="route-line"></span>
+          <span class="route-node" data-route="2">02</span>
+          <span class="route-line"></span>
+          <span class="route-node" data-route="3">03</span>
+          <span class="route-line"></span>
+          <span class="route-node dock-node" data-route="dock">码头</span>
+        </div>
+        <div class="top-actions">
+          <button class="icon-button" id="soundBtn" type="button" aria-pressed="true">
+            <span class="button-icon">◖</span><span id="soundLabel">声音 开</span>
+          </button>
+          <button class="icon-button" id="pauseBtn" type="button">
+            <span class="button-icon">Ⅱ</span><span>暂停</span>
+          </button>
+          <button class="icon-button" id="restartBtn" type="button">
+            <span class="button-icon">↻</span><span>重开</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="stage-wrap" id="viewport">
+          <canvas
+            id="gameCanvas"
+            width="1280"
+            height="720"
+            aria-label="潮汐渔港俯视驾驶场景"
+          >
+            当前浏览器不支持 Canvas。
+          </canvas>
+
+          <div class="hud" aria-live="polite">
+            <div class="hud-card mission-hud">
+              <span class="hud-kicker">当前航段</span>
+              <div class="mission-target">
+                <strong id="targetNumber">01</strong>
+                <div>
+                  <p id="targetName">浮标组 A-01</p>
+                  <small id="targetHint">驶入青色浮标圈</small>
+                </div>
+              </div>
+              <div class="part-pips" id="partPips" aria-label="已载维修件">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+
+            <div class="hud-card telemetry">
+              <div class="telemetry-row">
+                <span>潮位</span>
+                <strong id="tideReadout">62%</strong>
+              </div>
+              <div class="mini-track"><i id="tideBar"></i></div>
+              <div class="telemetry-row">
+                <span>潮流</span>
+                <strong id="currentReadout">→ 21</strong>
+              </div>
+              <div class="telemetry-row">
+                <span>任务时钟</span>
+                <strong id="clockReadout">02:30</strong>
+              </div>
+            </div>
+
+            <div class="toast" id="toast" role="status">按下「启航」开始任务</div>
+
+            <div class="input-strip">
+              <div class="speed-block">
+                <span class="hud-kicker">航速</span>
+                <strong id="speedReadout">0.0 kn</strong>
+              </div>
+              <div class="meter-block">
+                <span>推进</span>
+                <div class="horizontal-meter"><i id="throttleBar"></i></div>
+              </div>
+              <div class="meter-block">
+                <span>舵角</span>
+                <div class="steer-track"><i id="steerNeedle"></i></div>
+              </div>
+              <div class="input-event" id="inputEvent">等待输入</div>
+            </div>
+
+            <div class="key-hints" aria-label="键盘提示">
+              <span><kbd id="keyW">W</kbd><kbd id="keyS">S</kbd> 推进</span>
+              <span><kbd id="keyA">A</kbd><kbd id="keyD">D</kbd> 转向</span>
+              <span><kbd>Space</kbd> 暂停</span>
+              <span><kbd>R</kbd> 重开</span>
+            </div>
+
+            <div class="touch-controls" id="touchControls">
+              <div class="touch-pair">
+                <button class="touch-button" data-input="left" type="button" aria-label="左转">
+                  ◀
+                </button>
+                <button class="touch-button" data-input="right" type="button" aria-label="右转">
+                  ▶
+                </button>
+              </div>
+              <div class="touch-pair vertical">
+                <button class="touch-button" data-input="forward" type="button" aria-label="前进">
+                  ▲
+                </button>
+                <button class="touch-button" data-input="reverse" type="button" aria-label="倒车">
+                  ▼
+                </button>
+              </div>
+            </div>
+
+            <div class="input-ripple" id="inputRipple" aria-hidden="true"></div>
+          </div>
+
+          <div class="overlay intro-overlay" id="introOverlay">
+            <div class="modal intro-modal">
+              <p class="eyebrow">TIDAL REPAIR RUN / SEEDED MISSION</p>
+              <h2>在三组浮标之间，<br />把维修件带回码头。</h2>
+              <p class="lead">
+                按 01 → 02 → 03 的顺序检查浮标。船有惯性，潮流会随潮位改变方向，
+                浮桥、渔网和退潮浅滩会压缩航道。载货后速度和转向都会变差。
+              </p>
+              <div class="brief-grid">
+                <div><span>固定种子</span><strong>20261116</strong></div>
+                <div><span>目标</span><strong>3 组浮标</strong></div>
+                <div><span>潮窗</span><strong>150 秒</strong></div>
+              </div>
+              <div class="modal-actions">
+                <button class="primary-button" id="startBtn" type="button">启航</button>
+                <span class="microcopy">WASD / 方向键驾驶 · 每次操作都有状态回馈</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="overlay hidden" id="pauseOverlay">
+            <div class="modal compact-modal">
+              <p class="eyebrow">PAUSED</p>
+              <h2>潮汐暂停</h2>
+              <p class="lead">计时、惯性和潮流都已冻结。可从当前检查点重新开始。</p>
+              <div class="latest-checkpoint" id="pauseCheckpoint">当前检查点：码头</div>
+              <div class="modal-actions wrap">
+                <button class="primary-button" id="resumeBtn" type="button">继续</button>
+                <button class="secondary-button" id="pauseRestartBtn" type="button">重开任务</button>
+                <button class="danger-button" id="failDemoBtn" type="button">演示失败</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="overlay hidden" id="incidentOverlay">
+            <div class="modal compact-modal incident-modal">
+              <p class="eyebrow" id="incidentKicker">COLLISION</p>
+              <h2 id="incidentTitle">发生碰撞</h2>
+              <p class="lead" id="incidentDetail">船体与浮桥接触，当前航段已中断。</p>
+              <div class="incident-facts">
+                <div><span>恢复点</span><strong id="incidentCheckpoint">码头</strong></div>
+                <div><span>恢复内容</span><strong>位置 · 目标 · 资源 · 用时</strong></div>
+              </div>
+              <div class="modal-actions wrap">
+                <button class="primary-button" id="recoverBtn" type="button">
+                  从检查点恢复
+                </button>
+                <button class="danger-button" id="abandonBtn" type="button">放弃并结算</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="overlay hidden result-overlay" id="resultOverlay">
+            <div class="modal result-modal">
+              <div class="result-heading">
+                <div>
+                  <p class="eyebrow" id="resultKicker">MISSION COMPLETE</p>
+                  <h2 id="resultTitle">维修件已送达</h2>
+                  <p class="lead" id="resultLead">三组浮标全部检查，船已安全靠岸。</p>
+                </div>
+                <span class="result-stamp" id="resultStamp">完成</span>
+              </div>
+              <div class="result-layout">
+                <div class="summary-map-wrap">
+                  <canvas id="summaryMap" width="520" height="292"></canvas>
+                  <span>实际航线 · 检查点 · 事故点</span>
+                </div>
+                <div class="summary-data">
+                  <div class="summary-stat"><span>目标</span><strong id="summaryTargets">3 / 3</strong></div>
+                  <div class="summary-stat"><span>剩余燃油</span><strong id="summaryFuel">—</strong></div>
+                  <div class="summary-stat"><span>船体完整度</span><strong id="summaryHull">—</strong></div>
+                  <div class="summary-stat"><span>最终用时</span><strong id="summaryTime">—</strong></div>
+                </div>
+              </div>
+              <div class="failure-summary">
+                <span>失败原因摘要</span>
+                <strong id="summaryFailure">无</strong>
+                <small id="summaryIncidents">无碰撞或搁浅</small>
+              </div>
+              <div class="save-note">
+                <span class="save-dot"></span>
+                <span id="saveNote">正在保存状态摘要…</span>
+                <button class="text-button" id="resultExportBtn" type="button">导出 JSON</button>
+              </div>
+              <div class="modal-actions wrap">
+                <button class="primary-button" id="resultRestartBtn" type="button">
+                  同种子重开
+                </button>
+                <button class="secondary-button" id="resultCheckBtn" type="button">
+                  另开新局并比对布局
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="sidebar">
+          <section class="panel checklist-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">MISSION BOARD</p>
+                <h2>检查序列</h2>
+              </div>
+              <span class="seed-chip">SEED 20261116</span>
+            </div>
+            <ol class="checklist" id="checklist">
+              <li data-group="1"><span class="check-number">01</span><div><strong>A-01 · 北堤浮标</strong><small>等待检查</small></div></li>
+              <li data-group="2"><span class="check-number">02</span><div><strong>B-02 · 东口浮标</strong><small>尚未解锁</small></div></li>
+              <li data-group="3"><span class="check-number">03</span><div><strong>C-03 · 南沙浮标</strong><small>尚未解锁</small></div></li>
+              <li data-group="dock"><span class="check-number">⌂</span><div><strong>返航卸货</strong><small>完成三组后返回码头</small></div></li>
+            </ol>
+          </section>
+
+          <section class="panel resource-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">VESSEL STATUS</p>
+                <h2>剩余资源</h2>
+              </div>
+              <span class="load-chip" id="loadChip">空载</span>
+            </div>
+            <div class="resource-line">
+              <div><span>燃油</span><strong id="fuelValue">100</strong></div>
+              <div class="resource-track fuel"><i id="fuelBar"></i></div>
+            </div>
+            <div class="resource-line">
+              <div><span>船体</span><strong id="hullValue">100</strong></div>
+              <div class="resource-track hull"><i id="hullBar"></i></div>
+            </div>
+            <div class="penalty-note" id="penaltyNote">空载：满速与灵活转向</div>
+          </section>
+
+          <section class="panel current-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">TIDE TELEMETRY</p>
+                <h2>潮流窗口</h2>
+              </div>
+              <span class="tide-chip" id="tideChip">涨潮</span>
+            </div>
+            <div class="current-dial">
+              <div class="dial-ring"><span id="currentArrow">→</span></div>
+              <div>
+                <strong id="currentStrength">21 kn</strong>
+                <small id="waveReadout">浪高 0.72 m</small>
+                <small>流向随潮位翻转</small>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel seed-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">LAYOUT AUDIT</p>
+                <h2>同种子校验</h2>
+              </div>
+              <span class="status-dot" id="layoutStatusDot"></span>
+            </div>
+            <p class="fingerprint">布局指纹 <strong id="fingerprint">--------</strong></p>
+            <p class="layout-result" id="layoutResult">尚未进行第二次生成</p>
+            <button class="secondary-button full-width" id="seedCheckBtn" type="button">
+              另开新局并比对布局
+            </button>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <script type="module" src="./src/game.js"></script>
+  </body>
+</html>
