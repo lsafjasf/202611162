@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>雪原邮车 · 固定种子任务</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="layout">
+    <header class="topbar">
+      <h1>雪原邮车</h1>
+      <div class="hud">
+        <span id="hud-mail">邮袋 0/9</span>
+        <span id="hud-time">用时 0:00</span>
+        <span id="hud-speed">速度 0</span>
+        <span id="hud-status">行驶中</span>
+      </div>
+      <div class="hud hud-zone">
+        <span id="hud-zone"></span>
+        <span id="hud-grip"></span>
+      </div>
+      <div class="bars">
+        <label id="hud-fuel-text">燃油 100%</label>
+        <div class="bar"><div id="bar-fuel" class="bar-fill fuel"></div></div>
+        <label id="hud-health-text">车体 100%</label>
+        <div class="bar"><div id="bar-health" class="bar-fill health"></div></div>
+        <label>搁浅风险</label>
+        <div class="bar"><div id="hud-stuck" class="bar-fill stuck"></div></div>
+      </div>
+    </header>
+
+    <section class="stage">
+      <canvas id="game" width="900" height="640"></canvas>
+      <div id="input-feedback" class="input-feedback">等待输入（方向键 / WAD / 触屏按钮）</div>
+
+      <div id="overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 id="overlay-title"></h2>
+          <div id="overlay-body"></div>
+          <div class="overlay-actions">
+            <button id="btn-overlay-resume">继续</button>
+            <button id="btn-overlay-recover" class="warn">从检查点恢复</button>
+            <button id="btn-overlay-restart">重开（同 seed）</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="dpad">
+        <span></span>
+        <button id="btn-up" class="ctl">↑ 油门</button>
+        <span></span>
+        <button id="btn-left" class="ctl">← 左转</button>
+        <button id="btn-down" class="ctl">↓ 刹车/倒车</button>
+        <button id="btn-right" class="ctl">右转 →</button>
+      </div>
+      <div class="actions">
+        <button id="btn-chain" class="ctl">⛓ 防滑链 (C)</button>
+        <button id="btn-rescue" class="ctl warn">🚑 检查点恢复 (R)</button>
+        <button id="btn-pause" class="ctl">⏸ 暂停 (P)</button>
+        <button id="btn-restart" class="ctl">🔄 重开 (N)</button>
+        <button id="btn-mute" class="ctl">🔊 音效 (M)</button>
+      </div>
+      <div class="help">
+        <p>规则：穿过三处风向不同的开阔地，集齐 9 个邮袋后驶入红色营地圈即胜利。</p>
+        <p>深雪/冰面降低抓地力，侧风按路面状况推车；邮件越多刹车越慢；燃油耗尽、车体损坏或持续打滑会失败，按 R 可从最近检查点恢复，无需刷新页面。</p>
+        <p id="selftest" class="selftest">自检测试中…</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/rng.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/game.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const canvas = document.getElementById('game');
+      const game = new SnowMailGame(canvas, {});
+      const st = document.getElementById('selftest');
+      const r = game.selfTestResult;
+      st.textContent = `自检测试：${r.pass ? '通过 ✓' : '失败 ✗'}（同seed布局一致=${r.sameLayout}，异seed不同=${r.diffLayout}，数量正确=${r.counts}，三向风=${r.windDiff}，物理回放一致=${r.replayMatch}，布局#${r.layoutHash}）`;
+      st.classList.add(r.pass ? 'ok' : 'bad');
+      window.__game = game;
+    });
+  </script>
+</body>
+</html>
