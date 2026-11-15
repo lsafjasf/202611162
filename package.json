@@ -1,0 +1,13 @@
+{
+  "name": "lineart-vectorizer",
+  "version": "1.0.0",
+  "description": "黑白线稿描摹为可编辑 SVG 的纯前端工具（阈值/平滑/最小区域/撤销/参数保存/截图/回放测试）",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run-tests.mjs",
+    "serve": "node tests/server.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

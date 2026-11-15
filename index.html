@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>黑白线稿 SVG 描摹工具</title>
+  <link rel="stylesheet" href="src/style.css" />
+</head>
+<body>
+  <header>
+    <h1>黑白线稿 → 可编辑 SVG 描摹</h1>
+    <div id="statusLine" class="status">就绪</div>
+  </header>
+
+  <main>
+    <section class="panel controls">
+      <h2>参数</h2>
+      <label class="param-row">阈值（0-255）
+        <input id="thresholdRange" type="range" min="0" max="255" step="1" />
+        <input id="thresholdNumber" type="number" min="0" max="255" step="1" />
+      </label>
+      <label class="param-row">平滑度（0-5）
+        <input id="smoothnessRange" type="range" min="0" max="5" step="1" />
+        <input id="smoothnessNumber" type="number" min="0" max="5" step="1" />
+      </label>
+      <label class="param-row">最小区域（1-5000）
+        <input id="minAreaRange" type="range" min="1" max="5000" step="1" />
+        <input id="minAreaNumber" type="number" min="1" max="5000" step="1" />
+      </label>
+
+      <div class="btn-grid">
+        <button id="recomputeBtn" type="button">重算并对比</button>
+        <button id="undoBtn" type="button">撤销</button>
+        <button id="playBtn" type="button">暂停</button>
+        <button id="exportBtn" type="button">导出 SVG</button>
+        <button id="shotBtn" type="button">截图</button>
+        <button id="addAnnotationBtn" type="button">添加标注</button>
+      </div>
+
+      <h2>视图</h2>
+      <div class="btn-grid">
+        <button id="zoomInBtn" type="button">放大</button>
+        <button id="zoomOutBtn" type="button">缩小</button>
+        <button id="rotateCwBtn" type="button">顺时针旋转</button>
+        <button id="rotateCcwBtn" type="button">逆时针旋转</button>
+        <button id="resetViewBtn" type="button">复位视图</button>
+      </div>
+
+      <h2>参数预设</h2>
+      <div class="preset-row">
+        <input id="presetName" type="text" placeholder="预设名称" maxlength="40" />
+        <button id="savePresetBtn" type="button">保存</button>
+      </div>
+      <div class="preset-row">
+        <select id="presetSelect"></select>
+        <button id="loadPresetBtn" type="button">载入</button>
+        <button id="deletePresetBtn" type="button">删除</button>
+      </div>
+    </section>
+
+    <section class="panel stage">
+      <div id="errorBanner" class="error" hidden></div>
+      <canvas id="stageCanvas" width="480" height="500"></canvas>
+      <pre id="statsPanel" class="stats">等待计算…</pre>
+    </section>
+
+    <section class="panel compare">
+      <h2>重算前后对比（对象/位置/导出）</h2>
+      <pre id="comparePanel" class="compare-box">点击“重算并对比”生成差异报告</pre>
+    </section>
+  </main>
+
+  <script type="module" src="src/main.mjs"></script>
+</body>
+</html>
