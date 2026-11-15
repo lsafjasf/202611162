@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>等距投影街道生成器</title>
+<style>
+  body { margin: 0; font: 13px/1.5 sans-serif; background: #1c2733; color: #dfe7ee; display: flex; }
+  #panel { width: 260px; padding: 10px; overflow-y: auto; max-height: 100vh; box-sizing: border-box; }
+  #panel h1 { font-size: 15px; margin: 4px 0 10px; }
+  #panel fieldset { border: 1px solid #3a4a5a; border-radius: 6px; margin-bottom: 10px; }
+  #panel legend { padding: 0 6px; color: #9fb4c8; }
+  #panel label { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin: 3px 0; }
+  #panel input[type=number], #panel input[type=text] { width: 90px; background: #0f1620; color: #dfe7ee; border: 1px solid #3a4a5a; border-radius: 4px; padding: 2px 4px; }
+  #panel button { background: #2e6da4; color: #fff; border: 0; border-radius: 4px; padding: 5px 10px; margin: 2px 2px 2px 0; cursor: pointer; }
+  #panel button:hover { background: #3a80c0; }
+  #panel button.warn { background: #a4642e; }
+  #error { display: none; background: #5a1f1f; border: 1px solid #a04444; border-radius: 6px; padding: 6px 8px; margin-bottom: 10px; white-space: pre-wrap; }
+  #status { color: #9fb4c8; font-size: 12px; word-break: break-all; }
+  #view { flex: 1; position: relative; }
+  canvas { display: block; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  .layers label { justify-content: flex-start; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <h1>等距街道生成器</h1>
+  <div id="error"></div>
+  <fieldset>
+    <legend>场景参数</legend>
+    <label>seed <input id="p-seed" type="number"></label>
+    <label>建筑数 <input id="p-buildingCount" type="number"></label>
+    <label>树木数 <input id="p-treeCount" type="number"></label>
+    <label>路灯数 <input id="p-lampCount" type="number"></label>
+    <label>行人数 <input id="p-pedestrianCount" type="number"></label>
+    <label>街道长 <input id="p-streetLength" type="number" step="0.5"></label>
+    <label>街道宽 <input id="p-streetWidth" type="number" step="0.5"></label>
+    <button id="btn-apply">应用参数</button>
+    <button id="btn-undo" class="warn">撤销</button>
+  </fieldset>
+  <fieldset>
+    <legend>建筑高度</legend>
+    <label>建筑 <select id="sel-building"></select></label>
+    <label>高度 <input id="in-height" type="number" step="0.5" min="2" max="30"></label>
+    <button id="btn-height">修改高度</button>
+  </fieldset>
+  <fieldset class="layers">
+    <legend>图层</legend>
+    <div id="layer-box"></div>
+  </fieldset>
+  <fieldset>
+    <legend>视图</legend>
+    <button id="btn-rot-l">⟲ 旋转</button>
+    <button id="btn-rot-r">⟳ 旋转</button>
+    <button id="btn-zoom-in">放大</button>
+    <button id="btn-zoom-out">缩小</button>
+    <button id="btn-view-reset">重置视图</button>
+  </fieldset>
+  <fieldset>
+    <legend>动画 / 文件</legend>
+    <button id="btn-pause">暂停</button>
+    <button id="btn-export">导出 PNG</button>
+    <button id="btn-save">保存参数</button>
+    <button id="btn-load">载入参数</button>
+    <input id="file-load" type="file" accept=".json" style="display:none">
+  </fieldset>
+  <div id="status"></div>
+</div>
+<div id="view"><canvas id="canvas"></canvas></div>
+<script src="iso-scene.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

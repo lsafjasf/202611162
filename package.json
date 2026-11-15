@@ -1,0 +1,9 @@
+{
+  "name": "iso-street",
+  "version": "1.0.0",
+  "description": "等距投影街道场景生成器（纯代码生成，固定 seed，可测试）",
+  "scripts": {
+    "test": "node test.js && node test-app.js",
+    "start": "node -e \"const h=require('http'),f=require('fs'),p=require('path');h.createServer((q,s)=>{let f2=p.join(__dirname,q.url==='/'?'index.html':q.url.split('?')[0]);try{const d=f.readFileSync(f2);s.setHeader('Content-Type',{'.html':'text/html','.js':'text/javascript'}[p.extname(f2)]||'text/plain');s.end(d)}catch(e){s.statusCode=404;s.end()}}).listen(8080,()=>console.log('http://localhost:8080'))\""
+  }
+}
