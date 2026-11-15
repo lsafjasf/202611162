@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#071211" />
+    <title>REGISTER//02 · 双色印刷控制台</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2375f2bd'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='28' font-family='monospace' font-weight='700' fill='%23061310'%3E02%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="ambient-grid" aria-hidden="true"></div>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="REGISTER 02 控制台">
+          <span class="brand-plate">02</span>
+          <span class="brand-copy">
+            <strong>REGISTER<span>//</span>02</strong>
+            <small>双色印刷 · 套准控制台</small>
+          </span>
+        </a>
+        <div class="line-status" id="lineStatus">
+          <span class="pulse-dot"></span>
+          <span id="phaseLabel">待机</span>
+          <span class="line-code" id="batchLabel">B-001</span>
+        </div>
+        <div class="top-actions">
+          <span class="interlock-readout"><i></i> 供墨联锁在线</span>
+          <button class="ghost-button" id="soundBtn" type="button" aria-pressed="true">
+            <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+            声音
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="workbench">
+          <article class="panel press-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">LIVE REGISTER FEED / CMYK → 02</span>
+                <h1>纸带运行视野</h1>
+              </div>
+              <div class="legend" aria-label="画布图例">
+                <span><i class="legend-dot cyan"></i>青版</span>
+                <span><i class="legend-dot magenta"></i>品红版</span>
+                <span><i class="legend-dot paper"></i>套准标记</span>
+              </div>
+            </div>
+
+            <div class="canvas-frame">
+              <canvas id="pressCanvas" width="1280" height="640" aria-label="纸带、网点、套准标记与油墨实时视图"></canvas>
+              <div class="canvas-topline">
+                <span class="live-tag"><i></i> LIVE</span>
+                <span id="canvasClock">T+00:00.0</span>
+                <span class="canvas-spec">WEB 620 mm · 2C</span>
+              </div>
+              <div class="gauge-rail" aria-hidden="true">
+                <span>REG</span>
+                <span id="canvasReg">Δ 0.01 mm</span>
+                <span>INK</span>
+                <span id="canvasInk">50%</span>
+                <span>DRY</span>
+                <span id="canvasDry">62</span>
+              </div>
+
+              <div class="fault-overlay is-hidden" id="faultOverlay" role="alert" aria-live="assertive">
+                <div class="fault-stripe"></div>
+                <div class="fault-content">
+                  <span class="fault-kicker">SAFETY INTERLOCK · 保护停机</span>
+                  <h2 id="faultTitle">设备故障</h2>
+                  <p id="faultDetail"></p>
+                  <div class="fault-data">
+                    <div><span>具体设备</span><strong id="faultDevice">—</strong></div>
+                    <div><span>触发值</span><strong id="faultTrigger">—</strong></div>
+                    <div><span>保护阈值</span><strong id="faultThreshold">—</strong></div>
+                    <div><span>质量影响</span><strong id="faultImpact">—</strong></div>
+                  </div>
+                  <div class="fault-actions">
+                    <button class="danger-button" id="recoverBtn" type="button">排除故障并恢复</button>
+                    <span class="fault-note">恢复后自动进入 5 秒状态审计</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="metric-grid">
+              <div class="metric">
+                <span>良品</span>
+                <strong id="goodCount">0</strong>
+                <small>GOOD SHEETS</small>
+              </div>
+              <div class="metric">
+                <span>废品</span>
+                <strong id="wasteCount">0</strong>
+                <small>WASTE SHEETS</small>
+              </div>
+              <div class="metric streak-metric">
+                <span>连续合格</span>
+                <strong><b id="goodStreak">0</b><em>/ 10</em></strong>
+                <div class="streak-pips" id="streakPips" aria-hidden="true"></div>
+              </div>
+              <div class="metric">
+                <span>实时功耗</span>
+                <strong><b id="powerNow">0.38</b><em> kW</em></strong>
+                <small>PEAK <span id="peakPower">0.00</span> kW</small>
+              </div>
+              <div class="metric quality-metric">
+                <span>套准偏差</span>
+                <strong><b id="regValue">0.01</b><em> mm</em></strong>
+                <small id="qualityHint">等待纸带</small>
+              </div>
+            </div>
+          </article>
+
+          <aside class="panel control-panel">
+            <div class="panel-heading compact">
+              <div>
+                <span class="eyebrow">OPERATOR CONSOLE</span>
+                <h2>参数台</h2>
+              </div>
+              <span class="axis-count">04 AXES</span>
+            </div>
+
+            <div class="parameter-stack">
+              <div class="param-row" data-field="pressure">
+                <div class="param-label">
+                  <span><i class="param-index">01</i>滚筒压力</span>
+                  <output for="pressureRange"><b>52</b> N/mm</output>
+                </div>
+                <input id="pressureRange" data-param="pressure" type="range" min="0" max="100" step="1" value="52" />
+                <div class="param-scale"><span>0</span><span class="safe-zone">安全 46–58</span><span>100</span></div>
+              </div>
+              <div class="param-row" data-field="ink">
+                <div class="param-label">
+                  <span><i class="param-index">02</i>墨量</span>
+                  <output for="inkRange"><b>50</b> %</output>
+                </div>
+                <input id="inkRange" data-param="ink" type="range" min="0" max="100" step="1" value="50" />
+                <div class="param-scale"><span>0</span><span class="safe-zone">安全 44–56</span><span>100</span></div>
+              </div>
+              <div class="param-row" data-field="dryer">
+                <div class="param-label">
+                  <span><i class="param-index">03</i>干燥风速</span>
+                  <output for="dryerRange"><b>62</b> m/s</output>
+                </div>
+                <input id="dryerRange" data-param="dryer" type="range" min="0" max="100" step="1" value="62" />
+                <div class="param-scale"><span>0</span><span class="safe-zone">安全 54–70</span><span>100</span></div>
+              </div>
+              <div class="param-row" data-field="tension">
+                <div class="param-label">
+                  <span><i class="param-index">04</i>纸卷张力</span>
+                  <output for="tensionRange"><b>50</b> N</output>
+                </div>
+                <input id="tensionRange" data-param="tension" type="range" min="0" max="100" step="1" value="50" />
+                <div class="param-scale"><span>0</span><span class="safe-zone">安全 42–58</span><span>100</span></div>
+              </div>
+            </div>
+
+            <div class="command-grid">
+              <button class="primary-button" id="runBtn" type="button">
+                <span class="button-icon">▶</span><span id="runBtnText">启动生产</span>
+              </button>
+              <button class="square-button" id="resetBtn" type="button" title="重置当前批次">
+                <span>↺</span>重置
+              </button>
+              <button class="wide-button" id="rollBtn" type="button">
+                <span class="roll-icon" aria-hidden="true"></span>更换纸卷 <small>供墨联锁</small>
+              </button>
+              <button class="wide-button muted" id="endBtn" type="button">结束并归档本批</button>
+            </div>
+
+            <div class="fault-inject">
+              <div class="mini-heading">
+                <span>故障演练注入</span>
+                <i>仅运行中可用</i>
+              </div>
+              <div class="inject-row">
+                <select id="faultSelect" aria-label="选择故障类型">
+                  <option value="bearing">滚筒轴承卡滞</option>
+                  <option value="inkLoss">供墨压力丢失</option>
+                  <option value="fanStall">干燥风机失速</option>
+                  <option value="tensionDrift">张力传感器漂移</option>
+                </select>
+                <button class="outline-button" id="injectFaultBtn" type="button">注入</button>
+              </div>
+            </div>
+
+            <div class="interlock-card">
+              <span class="interlock-icon">!</span>
+              <p><strong>换卷互锁</strong>供墨泵必须先停，完成换卷后最后启动。滑出安全区会产生废页，越过硬限立即停机。</p>
+            </div>
+          </aside>
+        </section>
+
+        <section class="lower-grid">
+          <article class="panel timeline-panel">
+            <div class="panel-heading compact">
+              <div>
+                <span class="eyebrow">DEVICE CHRONOLOGY</span>
+                <h2>设备启停时序</h2>
+              </div>
+              <span class="event-count" id="eventCount">0 EVENTS</span>
+            </div>
+            <div class="device-strip" id="deviceStrip" aria-label="设备实时状态"></div>
+            <div class="audit-panel is-hidden" id="auditPanel">
+              <div class="audit-top">
+                <span class="audit-state" id="auditState">恢复审计中</span>
+                <span id="auditTime">0.0 / 5.0 s</span>
+              </div>
+              <div class="audit-track"><i id="auditBar"></i></div>
+              <div class="audit-checks">
+                <span id="auditResidual">状态残留检查中</span>
+                <span id="auditCounter">计数一致性检查中</span>
+              </div>
+              <div class="audit-errors" id="auditErrors"></div>
+            </div>
+            <div class="event-list" id="eventList">
+              <div class="empty-state">设备启动后，这里会按时间记录每一次启停。</div>
+            </div>
+          </article>
+
+          <article class="panel archive-panel">
+            <div class="panel-heading compact">
+              <div>
+                <span class="eyebrow">IMMUTABLE BATCH LOG</span>
+                <h2>批次档案与对照</h2>
+              </div>
+              <span class="lock-tag">LOCKED DATA</span>
+            </div>
+
+            <div class="archive-grid">
+              <div>
+                <div class="section-label">
+                  <span>已完成批次</span>
+                  <small>归档后不可修改</small>
+                </div>
+                <div class="history-list" id="historyList">
+                  <div class="empty-state small">完成或结束一个批次后生成报告。</div>
+                </div>
+              </div>
+
+              <div class="compare-block">
+                <div class="section-label">
+                  <span>并排对比</span>
+                  <div class="compare-selects">
+                    <select id="compareA" aria-label="对比批次 A"></select>
+                    <span>VS</span>
+                    <select id="compareB" aria-label="对比批次 B"></select>
+                  </div>
+                </div>
+                <div class="compare-table" id="compareTable">
+                  <div class="empty-state small">至少需要两个归档批次。</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="snapshot-section">
+              <div class="section-label">
+                <span>设备状态快照</span>
+                <button class="text-button" id="saveSnapshotBtn" type="button">＋ 保存当前状态</button>
+              </div>
+              <div class="snapshot-list" id="snapshotList">
+                <span class="snapshot-empty">保存后可修改参数重跑，并保留原始设备状态。</span>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>SIMULATION · 连续 10 张合格自动完成任务</span>
+        <span>提示：暂停检查不会丢失当前进度；重置只清除当前批次。</span>
+      </footer>
+    </div>
+
+    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+    <dialog class="batch-dialog" id="batchDialog">
+      <form method="dialog">
+        <div class="dialog-head">
+          <div>
+            <span class="eyebrow" id="dialogKicker">BATCH COMPLETE</span>
+            <h2 id="dialogTitle">批次报告</h2>
+          </div>
+          <button class="dialog-close" value="close" aria-label="关闭">×</button>
+        </div>
+        <div class="report-stats" id="reportStats"></div>
+        <div class="report-reason" id="reportReason"></div>
+        <div class="report-anomalies" id="reportAnomalies"></div>
+        <div class="dialog-actions">
+          <button class="primary-button" value="close">返回控制台</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
