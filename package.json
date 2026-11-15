@@ -1,0 +1,11 @@
+{
+  "name": "greenhouse-bumblebee-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic greenhouse bumblebee pollination simulation with Canvas and Web Audio.",
+  "scripts": {
+    "start": "python3 -m http.server 8080 --bind 127.0.0.1",
+    "test": "node --test tests/sim.test.js"
+  }
+}

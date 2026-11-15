@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="温室熊蜂授粉实验：调节放蜂时间、温控与遮光，观察连续变化的生态指标。"
+    />
+    <title>蜂序 · 温室授粉实验站</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient-glow" aria-hidden="true"></div>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="蜂序温室授粉实验站">
+          <span class="brand-mark" aria-hidden="true">
+            <span class="brand-wing"></span>
+            <span class="brand-body"></span>
+            <span class="brand-stripe"></span>
+          </span>
+          <span>
+            <strong>蜂序</strong>
+            <small>GREENHOUSE POLLINATION LAB</small>
+          </span>
+        </a>
+
+        <div class="run-meta" aria-label="实验运行信息">
+          <span class="seed-chip" id="seedChip">SEED 20261116</span>
+          <span class="weather-chip" id="weatherChip">
+            <span class="weather-icon" aria-hidden="true">☁</span>
+            <span id="weatherLabel">多云 · 风 2.1 m/s</span>
+          </span>
+          <span class="status-chip" id="runStatus">运行中</span>
+        </div>
+
+        <div class="top-actions">
+          <button class="icon-button" id="audioButton" type="button" aria-pressed="false">
+            <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>声音</span>
+          </button>
+          <button class="icon-button" id="pauseButton" type="button">
+            <span id="pauseIcon" aria-hidden="true">Ⅱ</span>
+            <span id="pauseLabel">暂停</span>
+          </button>
+          <button class="primary-button compact" id="restartButton" type="button">
+            同 seed 重开
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="metric-strip" aria-label="当前环境与蜂群指标">
+          <article class="metric-card time-card">
+            <div class="metric-heading"><span>实验时间</span><em id="dayLabel">第 1 天</em></div>
+            <div class="metric-value-row">
+              <strong id="clockValue">07:00</strong>
+              <span class="trend neutral" id="clockPhase">放蜂前</span>
+            </div>
+            <div class="day-progress"><i id="dayProgressBar"></i></div>
+          </article>
+
+          <article class="metric-card" id="tempCard">
+            <div class="metric-heading"><span>温室温度</span><em id="tempZone">舒适区</em></div>
+            <div class="metric-value-row">
+              <strong><span id="tempValue">24.0</span><small>°C</small></strong>
+              <span class="mini-chart" id="tempSpark" aria-hidden="true"></span>
+            </div>
+            <div class="comfort-scale">
+              <i class="cold-zone"></i><i class="ideal-zone"></i><i class="hot-zone"></i>
+              <b id="tempMarker"></b>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-heading"><span>蜂群活跃度</span><em id="activeBeeLabel">0 / 40 出巢</em></div>
+            <div class="metric-value-row">
+              <strong><span id="activityValue">0</span><small>%</small></strong>
+              <span class="trend up" id="activityTrend">等待放蜂</span>
+            </div>
+            <div class="meter"><i id="activityBar"></i></div>
+          </article>
+
+          <article class="metric-card" id="healthCard">
+            <div class="metric-heading"><span>蜂群健康</span><em id="colonyLabel">40 只工蜂</em></div>
+            <div class="metric-value-row">
+              <strong><span id="healthValue">92</span><small>/100</small></strong>
+              <span class="health-dot" id="healthDot"></span>
+            </div>
+            <div class="meter health"><i id="healthBar"></i></div>
+          </article>
+
+          <article class="metric-card" id="pollenCard">
+            <div class="metric-heading"><span>可用花粉</span><em id="pollenRate">消耗 0.0 /min</em></div>
+            <div class="metric-value-row">
+              <strong><span id="pollenValue">64</span><small>%</small></strong>
+              <span class="trend neutral" id="pollenTrend">储备稳定</span>
+            </div>
+            <div class="meter pollen"><i id="pollenBar"></i></div>
+          </article>
+
+          <article class="metric-card budget-card">
+            <div class="metric-heading"><span>实验预算</span><em id="costLabel">已用 ¥0</em></div>
+            <div class="metric-value-row">
+              <strong><small>¥</small><span id="budgetValue">120</span></strong>
+              <span class="trend neutral" id="budgetTrend">可执行 2 次协议</span>
+            </div>
+            <div class="budget-ticks" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+          </article>
+        </section>
+
+        <div class="workspace">
+          <aside class="panel control-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">ENVIRONMENT CONTROL</span>
+                <h2>环境调度</h2>
+              </div>
+              <span class="panel-index">01</span>
+            </div>
+
+            <p class="panel-intro">
+              蜂群在放蜂后出巢。热量与花粉共同驱动访花，连续高温和药害会损耗蜂群。
+            </p>
+
+            <label class="control-group" for="releaseInput">
+              <span class="control-label">
+                <span>放蜂时间</span>
+                <output id="releaseOutput">07:00</output>
+              </span>
+              <input id="releaseInput" type="range" min="6" max="13" step="0.5" value="7" />
+              <span class="control-scale"><i>06:00</i><i>09:30</i><i>13:00</i></span>
+              <small>越晚放蜂，有效授粉窗口越短；清晨低温会压低活跃度。</small>
+            </label>
+
+            <label class="control-group" for="thermostatInput">
+              <span class="control-label">
+                <span>温控目标</span>
+                <output id="thermostatOutput">24.0°C</output>
+              </span>
+              <input id="thermostatInput" type="range" min="18" max="34" step="0.5" value="24" />
+              <span class="control-scale"><i>18°C</i><i>26°C</i><i>34°C</i></span>
+              <small>日晒会叠加升温。熊蜂舒适区为 19–28°C。</small>
+            </label>
+
+            <label class="control-group" for="shadeInput">
+              <span class="control-label">
+                <span>遮光率</span>
+                <output id="shadeOutput">32%</output>
+              </span>
+              <input id="shadeInput" type="range" min="0" max="85" step="1" value="32" />
+              <span class="control-scale"><i>全光</i><i>45%</i><i>85%</i></span>
+              <small>遮光降低热负荷，也会削弱花蜜分泌与归巢定位。</small>
+            </label>
+
+            <div class="control-group fan-control">
+              <span class="control-label">
+                <span>循环风机</span>
+                <output id="fanOutput">自动 · 1 档</output>
+              </span>
+              <div class="segmented" id="fanControl" role="group" aria-label="风机档位">
+                <button type="button" data-fan="0">关闭</button>
+                <button type="button" data-fan="1" class="active">1 档</button>
+                <button type="button" data-fan="2">强风</button>
+              </div>
+            </div>
+
+            <div class="divider"><span>即时操作</span></div>
+
+            <div class="pesticide-block">
+              <div class="pesticide-title">
+                <span>植保喷药</span>
+                <span class="risk-tag" id="doseRisk">规范剂量</span>
+              </div>
+              <div class="segmented dose-options" id="doseControl" role="group" aria-label="喷药剂量">
+                <button type="button" data-dose="1" class="active">1.0×</button>
+                <button type="button" data-dose="1.6">1.6×</button>
+                <button type="button" data-dose="2.6">2.6×</button>
+              </div>
+              <button class="wide-button danger-outline" id="sprayButton" type="button">
+                <span>执行喷药</span><span>¥6</span>
+              </button>
+              <small class="inline-note">超过 1.0× 将产生毒性残留并伤害蜂群。</small>
+            </div>
+
+            <div class="quick-actions">
+              <button class="wide-button" id="ventButton" type="button">
+                <span>通风 15 分钟</span><span>¥2</span>
+              </button>
+              <button class="wide-button" id="feedButton" type="button">
+                <span>补充花粉</span><span>¥14</span>
+              </button>
+            </div>
+
+            <div class="divider"><span>实验预设</span></div>
+            <div class="scenario-list" id="scenarioList">
+              <button type="button" data-scenario="steady">
+                <b>稳态基线</b><small>舒适温区 · 完整授粉</small>
+              </button>
+              <button type="button" data-scenario="critical">
+                <b>热临界</b><small>强光窗口 · 接近阈值</small>
+              </button>
+              <button type="button" data-scenario="failure">
+                <b>药害失败</b><small>超量喷药 · 蜂群衰退</small>
+              </button>
+            </div>
+
+            <label class="seed-field" for="seedInput">
+              <span>复现种子</span>
+              <div>
+                <input id="seedInput" type="text" inputmode="numeric" maxlength="12" value="20261116" />
+                <button id="applySeedButton" type="button">重开</button>
+              </div>
+            </label>
+          </aside>
+
+          <section class="stage-column">
+            <div class="greenhouse-frame">
+              <div class="frame-bar">
+                <div>
+                  <span class="live-dot"></span>
+                  <span id="frameTitle">温室 04 · 授粉进行中</span>
+                </div>
+                <div class="frame-chips">
+                  <span id="sunChip">光照 620 lux</span>
+                  <span id="targetBeeChip">追踪蜂 #B-27</span>
+                  <span id="speedChip">1×</span>
+                </div>
+              </div>
+              <div class="canvas-wrap">
+                <canvas id="scene" width="1120" height="620" aria-label="温室熊蜂授粉实时视图"></canvas>
+                <div class="canvas-readout top-left">
+                  <span>热量 / 花粉耦合</span>
+                  <strong id="couplingValue">0.00</strong>
+                  <small id="couplingHint">等待蜂群出巢</small>
+                </div>
+                <div class="canvas-readout top-right">
+                  <span>天气序列</span>
+                  <strong id="weatherSequence">多云 → 晴 → 云隙光</strong>
+                  <small id="weatherCountdown">下次变化 38 min</small>
+                </div>
+                <div class="canvas-legend">
+                  <span><i class="swatch bloom"></i>花苞</span>
+                  <span><i class="swatch visited"></i>已充分授粉</span>
+                  <span><i class="swatch fruit"></i>坐果</span>
+                  <span><i class="swatch trail"></i>蜂群轨迹</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="latest-operation" id="latestOperation" role="status" aria-live="polite">
+              <span class="operation-icon" id="operationIcon" aria-hidden="true">◎</span>
+              <div>
+                <span id="operationEyebrow">当前状态 · 08:12</span>
+                <strong id="operationText">蜂群开始出巢，温控系统维持 24.0°C。</strong>
+              </div>
+              <span class="operation-delta" id="operationDelta">活跃度 +8%</span>
+            </div>
+
+            <div class="analysis-grid">
+              <section class="panel journal-panel">
+                <div class="panel-heading compact-heading">
+                  <div>
+                    <span class="eyebrow">EVENT LEDGER</span>
+                    <h2>最近操作与关键事件</h2>
+                  </div>
+                  <button class="text-button" id="exportButton" type="button">导出记录</button>
+                </div>
+                <div class="event-table-head">
+                  <span>时间</span><span>事件</span><span>资源 / 生物变化</span>
+                </div>
+                <ol class="event-list" id="eventList" aria-live="polite"></ol>
+              </section>
+
+              <aside class="panel recovery-panel">
+                <div class="panel-heading compact-heading">
+                  <div>
+                    <span class="eyebrow">RECOVERY PROTOCOL</span>
+                    <h2>恢复策略</h2>
+                  </div>
+                  <span class="threshold-badge" id="thresholdBadge">未触发</span>
+                </div>
+                <p class="threshold-line">
+                  触发阈值：健康 &lt; 60 或温度 &gt; 31°C 或工蜂 &lt; 30
+                </p>
+
+                <article class="recovery-card" data-recovery="boost">
+                  <div class="recovery-heading">
+                    <span class="recovery-letter">A</span>
+                    <div><b>应急补蜂</b><small>立即止损 · 高成本</small></div>
+                    <span class="recovery-cost">¥52</span>
+                  </div>
+                  <div class="recovery-effects">
+                    <span>+12 工蜂</span><span>健康 +16</span><span>花粉 −12</span>
+                  </div>
+                  <button type="button" id="boostRecovery" class="recovery-button" disabled>
+                    执行应急补蜂
+                  </button>
+                </article>
+
+                <article class="recovery-card" data-recovery="ecology">
+                  <div class="recovery-heading">
+                    <span class="recovery-letter calm">B</span>
+                    <div><b>生态稳控</b><small>缓慢修复 · 低成本</small></div>
+                    <span class="recovery-cost">¥18</span>
+                  </div>
+                  <div class="recovery-effects">
+                    <span>遮光 +10%</span><span>温控 −2°C</span><span>90 min 内恢复</span>
+                  </div>
+                  <button type="button" id="ecologyRecovery" class="recovery-button" disabled>
+                    执行生态稳控
+                  </button>
+                </article>
+
+                <div class="recovery-compare">
+                  <span>策略代价比较</span>
+                  <div><b>A</b> 即时生命值，预算消耗高</div>
+                  <div><b>B</b> 预算消耗低，生效延迟约 90 min</div>
+                </div>
+                <div class="recovery-result" id="recoveryResult" hidden></div>
+                <div class="audit-foot">
+                  <span>序列指纹</span>
+                  <code id="sequenceHash">—</code>
+                </div>
+              </aside>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <span>固定步长 30 Hz · 天气由 seed 生成并连续插值 · 无逐帧随机跳变</span>
+        <div>
+          <label for="speedSelect">速度</label>
+          <select id="speedSelect">
+            <option value="1">1×</option>
+            <option value="2">2×</option>
+            <option value="4">4×</option>
+          </select>
+          <button class="text-button" id="fixedReplayButton" type="button">固定序列复现</button>
+        </div>
+      </footer>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <dialog class="result-dialog" id="resultDialog">
+      <div class="result-seal" id="resultSeal">✓</div>
+      <span class="eyebrow" id="resultEyebrow">EXPERIMENT COMPLETE</span>
+      <h2 id="resultTitle">三块作物全部坐果</h2>
+      <p id="resultBody">蜂群保持健康，授粉任务完成。</p>
+      <div class="result-stats" id="resultStats"></div>
+      <div class="result-actions">
+        <button class="primary-button" id="resultRestart" type="button">同 seed 再试一次</button>
+        <button class="wide-button" id="resultClose" type="button">查看实验记录</button>
+      </div>
+    </dialog>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
