@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>洪水清漂船 · 河道回收任务</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>洪水清漂船 <small id="seed-label"></small></h1>
+      <div class="toolbar">
+        <span id="seed-check" class="check"></span>
+        <button id="btn-pause">暂停 (P)</button>
+        <button id="btn-restart">重开 (R)</button>
+        <button id="btn-newrun">新开一局 (N)</button>
+        <button id="btn-recover">检查点恢复 (K)</button>
+        <button id="mute-btn">🔊 声音(M)</button>
+        <button id="help-btn">说明(H)</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="stage">
+        <canvas id="game" width="960" height="600"></canvas>
+        <div id="banner" class="banner"></div>
+        <div id="help" class="help" hidden>
+          <h3>操作说明</h3>
+          <ul>
+            <li>↑ / ↓：调整航速油门（含倒车）；← / →：转向</li>
+            <li>W / S：放缆 / 收缆，缆越长张力越小但机动变差</li>
+            <li>空格 或 G：抓斗抓取船头扇形范围内最近的漂浮物</li>
+            <li>P/Esc：暂停；R：同 seed 重开；N：新开一局并校验布局</li>
+            <li>K：手动从最近检查点恢复；碰撞/搁浅也会自动恢复，均无需刷新页面</li>
+            <li>浮木、芦苇束为普通垃圾，危化桶 ☣ 为危险物，漏掉 3 件即失败</li>
+            <li>拖曳重量超过缆绳容量会断裂；撞桥墩/搁浅会从检查点恢复</li>
+            <li>把垃圾拖到右侧回收点卸货，集齐三类配额即获胜</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="controls" aria-label="屏幕控制按钮">
+        <button id="btn-up">↑ 油门</button>
+        <button id="btn-left">← 左转</button>
+        <button id="btn-right">右转 →</button>
+        <button id="btn-down">↓ 倒车</button>
+        <button id="btn-cable-up">W 放缆</button>
+        <button id="btn-cable-down">S 收缆</button>
+        <button id="btn-grab" class="primary">空格 抓斗</button>
+      </div>
+    </main>
+
+    <footer>
+      <p>
+        地图、任务与障碍均由同一固定 seed 生成；结束摘要写入
+        localStorage 键 <code>cleanup-boat-summary-v1</code>，可在 DevTools Console 查看
+        <code>JSON.parse(localStorage.getItem('cleanup-boat-summary-v1'))</code>。
+      </p>
+    </footer>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

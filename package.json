@@ -1,0 +1,10 @@
+{
+  "name": "flood-cleanup-boat",
+  "version": "1.0.0",
+  "description": "洪水清漂船 Canvas 游戏（固定 seed、确定性模拟、检查点恢复、状态摘要）",
+  "type": "module",
+  "scripts": {
+    "verify": "node tests/verify.mjs && node tests/dom/harness.mjs && node tests/dom/summary.mjs",
+    "serve": "node server.mjs"
+  }
+}
