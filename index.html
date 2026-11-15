@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08090c" />
+    <title>Night Orbit — Multicam Studio</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Night Orbit Studio">
+          <span class="brand-mark"><i></i><i></i><i></i></span>
+          <span class="brand-name">NIGHT<span>ORBIT</span></span>
+          <span class="brand-edition">MULTICAM / 01</span>
+        </a>
+        <div class="project-title">
+          <span class="eyebrow">CURRENT SESSION</span>
+          <button class="title-button" id="projectTitle" title="点击编辑项目名">夜航 · 现场版</button>
+        </div>
+        <div class="top-actions">
+          <div class="save-state"><span class="dot"></span><span id="saveState">已保存</span></div>
+          <button class="btn btn-ghost" id="loadProject" title="打开 JSON 工程">
+            <svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H10l2 2h5.5A2.5 2.5 0 0 1 20 9.5v7A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z"/></svg>
+            打开
+          </button>
+          <button class="btn btn-ghost" id="saveProject" title="下载工程 JSON">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+            保存
+          </button>
+          <button class="btn btn-ghost" id="runCompare" title="比较暂停帧与重播帧">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16M7 4v6m10-6v6M5 12h6v7H5zm8 0h6v7h-6z"/></svg>
+            帧校验
+          </button>
+          <button class="btn btn-primary" id="openExport">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12m0-12 4 4m-4-4L8 7M5 15v4h14v-4"/></svg>
+            导出
+          </button>
+          <input type="file" id="projectFile" accept="application/json,.json" hidden />
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="stage-column">
+          <div class="viewer-shell">
+            <div class="viewer-head">
+              <div class="program-label"><span class="live-dot"></span> PROGRAM <b id="activeCamLabel">A</b></div>
+              <div class="viewer-meta">
+                <span id="sceneLabel">SCENE 01 · AURORA</span>
+                <span class="sep">/</span>
+                <span id="fpsLabel">30 FPS</span>
+                <span class="sep">/</span>
+                <span id="resolutionLabel">1920 × 1080</span>
+              </div>
+            </div>
+            <div class="viewer" id="viewer">
+              <canvas id="programCanvas" width="1280" height="720" aria-label="节目画面预览"></canvas>
+              <div class="viewer-corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              <div class="viewer-timecode" id="viewerTimecode">00:00:00:00</div>
+              <div class="viewer-status"><span id="viewerScene">LIVE COMPOSITE</span><span id="viewerAudio">AUDIO 120 BPM</span></div>
+              <div class="viewer-hit" id="viewerHit"></div>
+            </div>
+          </div>
+
+          <div class="camera-strip">
+            <div class="strip-heading">
+              <div>
+                <span class="eyebrow">CAMERA BANK</span>
+                <strong>三机位监看</strong>
+              </div>
+              <span class="strip-hint">点击机位，切点自动吸附节拍</span>
+            </div>
+            <div class="camera-grid" id="cameraGrid"></div>
+          </div>
+        </section>
+
+        <aside class="inspector">
+          <div class="inspector-head">
+            <span class="eyebrow">CONTROL ROOM</span>
+            <span class="inspector-badge">LIVE EDIT</span>
+          </div>
+
+          <section class="panel scene-panel">
+            <div class="panel-title"><span>场景氛围</span><span class="panel-index">01</span></div>
+            <div class="scene-tabs" id="sceneTabs"></div>
+            <div class="scene-note"><span id="sceneNote">极光穿过舞台，环境声为合成氛围。</span><i id="sceneSwatch"></i></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title"><span>切点与转场</span><span class="panel-index" id="selectedCutLabel">CUT 02</span></div>
+            <div class="cut-summary">
+              <div><span>当前机位</span><strong id="cutCameraName">CAM B</strong></div>
+              <div><span>切点</span><strong id="cutTime">00:03.800</strong></div>
+            </div>
+            <div class="field-label">转场方式</div>
+            <div class="segmented" id="transitionTypes">
+              <button data-type="dissolve" class="active">叠化</button>
+              <button data-type="whip">甩镜</button>
+              <button data-type="wipe">擦除</button>
+            </div>
+            <div class="field-label range-label"><span>转场时长</span><b id="transitionValue">0.55s</b></div>
+            <input class="range" type="range" id="transitionDuration" min="0.15" max="1.2" step="0.05" value="0.55" />
+            <div class="transition-preview"><span id="transStartLabel">03.800</span><div class="transition-bar"><i id="transitionBar"></i></div><span id="transEndLabel">04.350</span></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title"><span>声音节拍</span><span class="panel-index">AUDIO</span></div>
+            <div class="audio-meter" id="audioMeter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="audio-row">
+              <div><span>BPM</span><strong id="bpmValue">120</strong></div>
+              <div><span>音频起点</span><strong id="audioStartValue">00:00.000</strong></div>
+              <div><span>拍号</span><strong>4 / 4</strong></div>
+            </div>
+            <div class="field-label range-label"><span>音频入点</span><b id="audioStartHint">随工程保存</b></div>
+            <input class="range range-warm" type="range" id="audioStart" min="0" max="4" step="0.1" value="0" />
+          </section>
+
+          <section class="panel compact-panel">
+            <div class="panel-title"><span>机位关键帧</span><span class="panel-index" id="keyframeCount">09 KF</span></div>
+            <div class="keyframe-row">
+              <div class="keyframe-copy"><strong id="keyframeCamera">CAM A</strong><span>切镜不重置场景动画</span></div>
+              <button class="icon-btn" id="addKeyframe" title="在当前时间记录机位姿态">+</button>
+            </div>
+            <div class="keyframe-dots" id="keyframeDots"></div>
+          </section>
+
+          <div class="inspector-foot">
+            <kbd>⎵</kbd><span>播放 / 暂停</span>
+            <kbd>J</kbd><span>上一镜头</span>
+            <kbd>K</kbd><span>下一镜头</span>
+            <kbd>⌫</kbd><span>删除切点</span>
+          </div>
+        </aside>
+      </main>
+
+      <section class="timeline-section" id="timelineSection">
+        <div class="transport">
+          <div class="transport-buttons">
+            <button class="transport-btn" id="toStart" title="回到入点">
+              <svg viewBox="0 0 24 24"><path d="M6 5v14M18 6l-8 6 8 6V6Z"/></svg>
+            </button>
+            <button class="transport-btn play" id="playPause" title="播放 / 暂停">
+              <svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5-10-6.5Z"/></svg>
+              <svg class="pause-icon" viewBox="0 0 24 24"><path d="M8 5h3v14H8zM14 5h3v14h-3z"/></svg>
+            </button>
+            <button class="transport-btn" id="toEnd" title="跳到出点">
+              <svg viewBox="0 0 24 24"><path d="M18 5v14M6 6l8 6-8 6V6Z"/></svg>
+            </button>
+            <button class="transport-btn loop-btn active" id="loopButton" title="循环播放">
+              <svg viewBox="0 0 24 24"><path d="M17 7H7a4 4 0 0 0-4 4m4-4L4 4m3 3L4 10m3 7h10a4 4 0 0 0 4-4m-4 4 3 3m-3-3 3-3"/></svg>
+            </button>
+          </div>
+          <div class="time-display">
+            <span class="current-time" id="currentTime">00:00:00:00</span>
+            <span class="time-divider">/</span>
+            <span class="total-time" id="totalTime">00:00:16:15</span>
+          </div>
+          <div class="transport-meta">
+            <span><i class="marker-dot in"></i>IN <b id="inLabel">00:00.000</b></span>
+            <span><i class="marker-dot out"></i>OUT <b id="outLabel">00:16.500</b></span>
+            <span id="timelineZoomLabel">100%</span>
+            <button class="mini-btn" id="zoomOut" title="缩小时间线">−</button>
+            <button class="mini-btn" id="zoomIn" title="放大时间线">+</button>
+          </div>
+        </div>
+
+        <div class="timeline-body" id="timelineBody">
+          <div class="track-labels">
+            <div class="ruler-spacer"></div>
+            <div class="track-label"><span class="track-icon cut-icon">⌁</span><div><b>机位 / CUTS</b><small>3 CAM</small></div></div>
+            <div class="track-label"><span class="track-icon text-icon">T</span><div><b>字幕 / TITLES</b><small>5 CLIPS</small></div></div>
+            <div class="track-label"><span class="track-icon audio-icon">≈</span><div><b>环境声 / AUDIO</b><small>WEB AUDIO</small></div></div>
+          </div>
+          <div class="timeline-scroll" id="timelineScroll">
+            <div class="timeline-canvas" id="timelineCanvas">
+              <div class="ruler" id="ruler"></div>
+              <div class="track scene-track"><div class="scene-strip"><span>SCENE 01 · 夜航 / AURORA</span><i></i></div></div>
+              <div class="track cut-track" id="cutTrack"></div>
+              <div class="track title-track" id="titleTrack"></div>
+              <div class="track audio-track" id="audioTrack">
+                <canvas id="waveformCanvas" height="56"></canvas>
+              </div>
+              <div class="playhead" id="playhead"><span></span><i></i></div>
+              <div class="in-marker" id="inMarker"></div>
+              <div class="out-marker" id="outMarker"></div>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-footer">
+          <div class="timeline-tools">
+            <button class="tool-btn active" id="selectTool">↖ 选择</button>
+            <button class="tool-btn" id="cutHere">✂ 在此切机位</button>
+            <button class="tool-btn" id="deleteCut">⌫ 删除切点</button>
+          </div>
+          <div class="legend">
+            <span><i style="--c:#66e3ff"></i>CAM A</span>
+            <span><i style="--c:#ffcf66"></i>CAM B</span>
+            <span><i style="--c:#fe7bb4"></i>CAM C</span>
+            <span><i style="--c:#8dffba"></i>BEAT SYNC</span>
+          </div>
+          <div class="timeline-hint">拖动播放头定位 · 点击片段选择转场</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+    <div class="modal-backdrop" id="exportModal" hidden>
+      <div class="export-modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+        <button class="modal-close" id="closeExport" aria-label="关闭">×</button>
+        <span class="eyebrow">DELIVER / MASTER</span>
+        <h2 id="exportTitle">导出节目与镜头表</h2>
+        <p class="modal-intro">节目视频、字幕与切点共享同一时间线。导出失败不会修改当前工程。</p>
+        <div class="export-summary">
+          <div><span>PROGRAM</span><strong>Night Orbit · Live</strong></div>
+          <div><span>RANGE</span><strong id="exportRange">00:00.000 → 00:16.500</strong></div>
+          <div><span>DURATION</span><strong id="exportDuration">00:16.500 / 495f</strong></div>
+          <div><span>SHOTS</span><strong id="exportShots">5 CUTS · 3 CAM</strong></div>
+        </div>
+        <div class="export-integrity"><span class="integrity-icon">✓</span><div><b>时间线完整性检查通过</b><p id="integrityText">入点、出点、字幕与节拍已在同一时钟内对齐。</p></div></div>
+        <div class="export-options">
+          <label><input type="checkbox" id="exportVideo" checked /> 节目视频 <span>WebM · 1280×720 · 30fps</span></label>
+          <label><input type="checkbox" id="exportShots" checked /> 镜头表 <span>CSV + JSON 清单</span></label>
+        </div>
+        <button class="export-start" id="startExport"><span>开始导出</span><i>↗</i></button>
+        <div class="export-progress" id="exportProgress" hidden>
+          <div class="export-progress-head"><span id="exportStatus">正在准备编码器…</span><b id="exportPercent">0%</b></div>
+          <div class="export-track"><i id="exportBar"></i></div>
+          <small>请保持窗口在前台，视频按时间线实时渲染。</small>
+        </div>
+        <div class="export-result" id="exportResult" hidden></div>
+      </div>
+    </div>
+
+    <div class="compare-overlay" id="compareOverlay" hidden>
+      <div class="compare-card">
+        <div class="compare-head"><div><span class="eyebrow">FRAME CONSISTENCY</span><h3>帧一致性校验</h3></div><button id="closeCompare">×</button></div>
+        <div class="compare-grid">
+          <figure><canvas id="compareA" width="640" height="360"></canvas><figcaption><span>暂停帧</span><b id="compareTimeA">--</b></figcaption></figure>
+          <figure><canvas id="compareB" width="640" height="360"></canvas><figcaption><span>重播帧</span><b id="compareTimeB">--</b></figcaption></figure>
+        </div>
+        <div class="compare-verdict" id="compareVerdict"><span>…</span> 正在比较像素与音频事件</div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>
