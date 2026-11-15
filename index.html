@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>海上珊瑚苗圃模拟</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🪸 海上珊瑚苗圃模拟 <span id="dayLabel">第 1 天 / 共 12 天</span></h1>
+    <div class="controls-top">
+      <label>种子 <input id="seedInput" value="reef-42"></label>
+      <button id="btnPause">⏸ 暂停</button>
+      <button id="btnSpeed">1×</button>
+      <button id="btnRestart">↻ 重开(同种子)</button>
+      <button id="btnReplay">▶ 复现操作序列</button>
+      <button id="btnMute">🔊</button>
+    </div>
+  </header>
+  <main>
+    <section class="left">
+      <canvas id="reef" width="760" height="520"></canvas>
+      <div id="lastOp" class="last-op">尚未执行操作</div>
+      <div class="panel">
+        <h2>事件日志</h2>
+        <div id="logBox" class="log"></div>
+      </div>
+    </section>
+    <section class="right">
+      <div class="panel">
+        <h2>环境指标</h2>
+        <div id="envMetrics" class="metrics"></div>
+      </div>
+      <div class="panel">
+        <h2>生物与资源</h2>
+        <div id="bioMetrics" class="metrics"></div>
+      </div>
+      <div class="panel">
+        <h2>环境调控</h2>
+        <label>遮光网 <span id="shadeVal">30%</span>
+          <input type="range" id="shadeSlider" min="0" max="90" value="30"></label>
+        <label>水流 <span id="flowVal">50%</span>
+          <input type="range" id="flowSlider" min="0" max="100" value="50"></label>
+        <label>水温设定 <span id="tempVal">26.0℃</span>
+          <input type="range" id="tempSlider" min="20" max="30" step="0.5" value="26"></label>
+        <div class="btn-row">
+          <button id="btnChiller">❄ 冷水机开/关</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>养护操作</h2>
+        <div class="btn-row">
+          <button id="btnCleanAll">🧹 全面清洁(-40)</button>
+          <button id="btnCleanOne">🧽 清洁选中(-40)</button>
+        </div>
+        <div class="btn-row">
+          <button id="btnTransplant">🌱 移栽选中(-80,-1幼枝)</button>
+        </div>
+        <p class="hint">点击画布中的珊瑚进行选择;只能移栽已死亡的个体。</p>
+      </div>
+      <div class="panel">
+        <h2>恢复策略</h2>
+        <div class="btn-row">
+          <button id="btnStratA">A 遮阴+降温</button>
+          <button id="btnStratB">B 强流冲洗+清洁</button>
+        </div>
+        <p class="hint">A 触发阈值:平均白化≥0.30,代价为持续电费;B 触发阈值:沉积/附着≥0.50,代价为清洁费+水泵能耗。</p>
+        <div id="strategyTable"></div>
+      </div>
+    </section>
+  </main>
+  <div id="finalOverlay" class="overlay hidden">
+    <div class="overlay-box">
+      <h2 id="finalTitle"></h2>
+      <div id="finalBody"></div>
+      <button id="btnAgain">再来一局(同种子)</button>
+    </div>
+  </div>
+  <script src="sim.js"></script>
+  <script src="render.js"></script>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

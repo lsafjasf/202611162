@@ -1,0 +1,16 @@
+{
+  "name": "coral-nursery-sim",
+  "version": "1.0.0",
+  "description": "海上珊瑚苗圃模拟:Canvas + Web Audio + 确定性种子复现",
+  "main": "sim.js",
+  "scripts": {
+    "test": "node test_sim.js",
+    "smoke": "node smoke_test.js",
+    "start": "python3 -m http.server 8000"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "playwright": "^1.65.1"
+  }
+}
