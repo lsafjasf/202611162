@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>动画片段裁剪工作台</title>
+<link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🎬 片段裁剪工作台</div>
+  <div class="top-actions">
+    <label class="scene-pick">场景
+      <select id="sceneSelect"></select>
+    </label>
+    <button id="btnSave" type="button">保存工程</button>
+    <button id="btnReload" type="button">重新打开</button>
+    <button id="btnMute" type="button">静音</button>
+    <label class="fault-pick"><input type="checkbox" id="faultToggle" /> 注入导出故障</label>
+    <button id="btnExport" class="primary" type="button">导出三个 WebM</button>
+  </div>
+</header>
+
+<main class="workspace">
+  <section class="stage-col">
+    <div class="panel">
+      <div class="panel-head">
+        <span>源画面（960×540，拖动裁剪框；入出点变化后约束自动重算）</span>
+        <span id="clockReadout" class="clock-readout">0.000 s</span>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="sourceCanvas" width="960" height="540"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span id="previewTitle">片段预览</span><span id="previewMeta"></span></div>
+      <div class="preview-wrap">
+        <canvas id="outputCanvas" width="480" height="270"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <aside class="side-col">
+    <div class="panel">
+      <div class="panel-head">片段与裁剪</div>
+      <div id="clipTabs" class="clip-tabs"></div>
+      <div id="clipInspector" class="clip-inspector"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">字幕（随裁剪框移动）</div>
+      <ul id="subtitleList" class="subtitle-list"></ul>
+    </div>
+    <div class="panel">
+      <div class="panel-head">导出报告</div>
+      <pre id="exportReport" class="export-report">尚未导出</pre>
+    </div>
+  </aside>
+</main>
+
+<footer class="timeline-panel">
+  <div class="transport">
+    <button id="btnPlay" type="button">▶ 播放</button>
+    <button id="btnPause" type="button">⏸ 暂停</button>
+    <label class="loop-pick"><input type="checkbox" id="loopToggle" checked /> 循环</label>
+    <span id="transportTime" class="transport-time">0.000 / 6.000 s</span>
+    <span id="audioStatus" class="audio-status">音频：未启动</span>
+  </div>
+  <div id="timeline" class="timeline"></div>
+</footer>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
