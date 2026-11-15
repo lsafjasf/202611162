@@ -1,0 +1,13 @@
+{
+  "name": "ridgeline-terrain-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node tests/verify.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.0"
+  }
+}

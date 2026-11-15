@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e9e4d8" />
+    <title>Ridgeline — 地形剖面实验室</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Ridgeline 地形剖面实验室">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i>
+          </span>
+          <span class="brand-copy">
+            <strong>RIDGELINE</strong>
+            <small>地形剖面实验室 / TERRAIN SECTION LAB</small>
+          </span>
+        </a>
+
+        <div class="topbar-meta">
+          <span class="live-badge"><i></i> GEOMETRY LIVE</span>
+          <span class="topbar-separator"></span>
+          <span id="topDigest" class="mono subtle">MESH ········</span>
+        </div>
+
+        <nav class="actions" aria-label="工作区操作">
+          <button id="undoButton" class="action-button" type="button" title="撤销上一步变更 (Ctrl+Z)" disabled>
+            <span class="action-icon" aria-hidden="true">↶</span><span>撤销</span>
+          </button>
+          <button id="saveButton" class="action-button" type="button">
+            <span class="action-icon" aria-hidden="true">＋</span><span>保存参数</span>
+          </button>
+          <button id="exportButton" class="action-button" type="button">
+            <span class="action-icon" aria-hidden="true">↗</span><span>导出 SVG</span>
+          </button>
+          <button id="screenshotButton" class="snapshot-button" type="button">
+            <span class="action-icon" aria-hidden="true">◎</span><span>截图</span>
+          </button>
+        </nav>
+      </header>
+
+      <main class="workspace">
+        <section class="visual-row" aria-label="地形与剖面双视图">
+          <article class="stage-card">
+            <div class="stage-heading">
+              <div>
+                <span class="eyebrow light">01 / TERRAIN FIELD</span>
+                <h1>立体地形</h1>
+              </div>
+              <div class="stage-stats">
+                <div class="stat-block">
+                  <span>最高点</span>
+                  <strong id="peakElevation">—</strong>
+                </div>
+                <div class="stat-block">
+                  <span>网格 / 三角面</span>
+                  <strong id="meshCount">—</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="terrain-frame">
+              <canvas id="terrainCanvas" aria-label="可旋转三维地形视图"></canvas>
+              <div class="canvas-corner top-left">
+                <span class="section-signal"><i></i> SECTION B</span>
+              </div>
+              <div class="canvas-corner top-right">
+                <button id="pauseButton" class="icon-button" type="button" aria-label="暂停动画" title="暂停 / 继续动画">
+                  <span id="pauseIcon">Ⅱ</span>
+                </button>
+                <button id="resetViewButton" class="icon-button" type="button" aria-label="重置视角" title="重置视角">
+                  <span aria-hidden="true">⌂</span>
+                </button>
+              </div>
+              <div class="canvas-hint">
+                <span><b>拖动</b> 旋转</span><span><b>滚轮</b> 缩放</span><span><b>Shift + 拖动</b> 平移</span>
+              </div>
+              <div class="camera-readout mono" aria-live="off">
+                <span>AZ <b id="yawReadout">—</b></span>
+                <span>EL <b id="pitchReadout">—</b></span>
+                <span>Z <b id="zoomReadout">—</b></span>
+              </div>
+            </div>
+
+            <div class="stage-footer">
+              <div class="legend">
+                <span class="legend-label">低</span>
+                <i class="legend-ramp"></i>
+                <span class="legend-label">高</span>
+                <span class="legend-note">高程着色 · 实时法线明暗</span>
+              </div>
+              <div id="interactionNote" class="interaction-note">
+                <i></i><span>将悬停点同步到剖面</span>
+              </div>
+            </div>
+          </article>
+
+          <aside class="profile-card">
+            <header class="profile-heading">
+              <div>
+                <span class="eyebrow dark">02 / CROSS SECTION</span>
+                <h2>地形剖面</h2>
+              </div>
+              <span id="syncBadge" class="sync-badge"><i></i> 同步高亮</span>
+            </header>
+
+            <div class="direction-tabs" role="tablist" aria-label="剖面方向">
+              <button type="button" role="tab" data-angle="0" class="direction-tab">西—东</button>
+              <button type="button" role="tab" data-angle="90" class="direction-tab">南—北</button>
+              <button type="button" role="tab" data-angle="45" class="direction-tab">西南—东北</button>
+              <span class="direction-caption mono">方向切换保留相机</span>
+            </div>
+
+            <div class="profile-frame">
+              <canvas id="profileCanvas" aria-label="地形剖面图"></canvas>
+              <div class="profile-stamp">
+                <span class="mono">PROFILE / <b id="profileAngleLabel">—</b></span>
+              <b id="profilePeakValue">—</b>
+              </div>
+            </div>
+
+            <div class="profile-summary">
+              <div>
+                <span>剖线最高</span>
+                <strong id="sectionPeak">—</strong>
+              </div>
+              <div>
+                <span>剖线长度</span>
+                <strong id="sectionLength">—</strong>
+              </div>
+              <div>
+                <span>采样点</span>
+                <strong id="sampleCount">—</strong>
+              </div>
+            </div>
+
+            <div class="section-position">
+              <div class="section-position-copy">
+                <span class="eyebrow dark">SECTION PATH</span>
+                <strong id="sectionPathLabel">—</strong>
+              </div>
+              <label class="mini-range">
+                <span>剖线偏移</span>
+                <input id="compactOffset" type="range" min="-0.78" max="0.78" step="0.01" value="0" />
+                <output id="compactOffsetValue" class="mono">0.00</output>
+              </label>
+            </div>
+
+            <div id="linkedReadout" class="linked-readout">
+              <span class="linked-dot"></span>
+              <div>
+                <small>LINKED CURSOR</small>
+                <strong>悬停任一视图以联动高亮</strong>
+              </div>
+              <span id="linkedElevation" class="mono">—</span>
+            </div>
+          </aside>
+        </section>
+
+        <section class="control-dock" aria-label="地形参数与剖面设置">
+          <div class="dock-heading">
+            <div>
+              <span class="eyebrow dark">03 / PARAMETERS</span>
+              <h2>生成参数</h2>
+            </div>
+            <p>种子与山脊高度会重建统一网格。屏幕、SVG 与内部诊断使用同一几何源。</p>
+          </div>
+
+          <div class="parameter-grid">
+            <div class="field-group seed-group">
+              <label for="seedInput">噪声种子 <span class="mono">SEED</span></label>
+              <div class="field-with-action">
+                <input id="seedInput" type="number" min="0" max="2147483647" step="1" value="688" />
+                <button id="randomSeedButton" class="field-action" type="button" title="随机种子" aria-label="随机种子">✦</button>
+              </div>
+              <span class="field-help">整数 · 0—2147483647</span>
+            </div>
+
+            <div class="field-group ridge-group">
+              <label for="ridgeInput">山脊高度 <span class="mono">RIDGE</span></label>
+              <div class="range-with-value">
+                <input id="ridgeInput" type="range" min="0.1" max="2.4" step="0.01" value="1" />
+                <output id="ridgeValue" for="ridgeInput">1.00×</output>
+              </div>
+              <span class="field-help">控制脊线锐度与相对抬升</span>
+            </div>
+
+            <div class="field-group angle-group">
+              <label for="angleInput">剖面方向 <span class="mono">AZIMUTH</span></label>
+              <div class="range-with-value">
+                <input id="angleInput" type="range" min="0" max="180" step="1" value="24" />
+                <output id="angleValue" for="angleInput">24°</output>
+              </div>
+              <span class="field-help">任意水平剖线 · 0°—180°</span>
+            </div>
+
+            <div class="field-group offset-group">
+              <label for="offsetInput">剖线偏移 <span class="mono">OFFSET</span></label>
+              <div class="range-with-value">
+                <input id="offsetInput" type="range" min="-0.78" max="0.78" step="0.01" value="0" />
+                <output id="offsetValue" for="offsetInput">0.00</output>
+              </div>
+              <span class="field-help">沿法线平移 · 归一化坐标</span>
+            </div>
+
+            <div class="field-group resolution-group">
+              <label for="resolutionInput">网格精度 <span class="mono">RES</span></label>
+              <select id="resolutionInput">
+                <option value="36">36 × 36</option>
+                <option value="48" selected>48 × 48</option>
+                <option value="60">60 × 60</option>
+                <option value="72">72 × 72</option>
+              </select>
+              <span class="field-help">更高精度会增加三角面数量</span>
+            </div>
+
+            <div class="integrity-card">
+              <span class="integrity-title"><i></i> INTEGRITY</span>
+              <div class="integrity-values mono">
+                <span><b>MESH</b><em id="integrityMesh">—</em></span>
+                <span><b>PROFILE</b><em id="integrityProfile">—</em></span>
+                <span><b>ORDER</b><em id="integrityOrder">—</em></span>
+              </div>
+              <span id="integrityNote" class="integrity-note">几何、预览、导出共用同一摘要</span>
+            </div>
+          </div>
+        </section>
+
+        <div id="errorBanner" class="error-banner" role="alert" aria-live="assertive" hidden>
+          <span class="error-mark">!</span>
+          <div>
+            <strong>参数未应用</strong>
+            <p id="errorMessage">—</p>
+          </div>
+          <button id="dismissError" class="error-dismiss" type="button" aria-label="关闭错误提示">×</button>
+        </div>
+      </main>
+
+      <footer class="footer-bar">
+        <span class="footer-brand"><i></i> RIDGELINE / PROCEDURAL TERRAIN</span>
+        <span id="statusMessage" class="status-message">就绪 · 拖动地形开始探索</span>
+        <div class="footer-tools">
+          <button id="libraryButton" type="button" class="text-button">已保存 <b id="presetCount">0</b></button>
+          <span class="mono">DIGEST <b id="footerDigest">—</b></span>
+        </div>
+      </footer>
+    </div>
+
+    <dialog id="presetDialog" class="dialog">
+      <form method="dialog" class="dialog-card" id="saveForm">
+        <div class="dialog-heading">
+          <div>
+            <span class="eyebrow dark">PARAMETER BOOKMARK</span>
+            <h2>保存当前参数</h2>
+          </div>
+          <button value="cancel" class="dialog-close" aria-label="关闭">×</button>
+        </div>
+        <p class="dialog-copy">保存几何参数、相机、剖线方向与偏移。重新载入后可逐像素复核。</p>
+        <label class="dialog-field">
+          <span>快照名称</span>
+          <input id="presetName" type="text" maxlength="48" value="" autocomplete="off" />
+        </label>
+        <div class="dialog-meta mono">
+          <span>MESH <b id="dialogMeshDigest">—</b></span>
+          <span>PROFILE <b id="dialogProfileDigest">—</b></span>
+        </div>
+        <div class="dialog-actions">
+          <button value="cancel" class="secondary-button" type="button" id="cancelSave">取消</button>
+          <button value="default" class="primary-button" type="button" id="confirmSave">保存至本机</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="libraryDialog" class="dialog library-dialog">
+      <div class="dialog-card library-card">
+        <div class="dialog-heading">
+          <div>
+            <span class="eyebrow dark">LOCAL LIBRARY</span>
+            <h2>已保存的快照</h2>
+          </div>
+          <button class="dialog-close" id="closeLibrary" aria-label="关闭">×</button>
+        </div>
+        <div id="presetList" class="preset-list"></div>
+        <p class="library-empty" id="libraryEmpty">尚未保存参数。选择一个地形状态后保存，即可在本机复核。</p>
+      </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>
