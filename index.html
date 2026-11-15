@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#151710" />
+    <title>窑序 · Kiln Sequence</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23151710'/%3E%3Cpath d='M9 22c2-6 3-9 7-12 4 4 5 8 7 12-5 2-9 2-14 0Z' fill='%23f07d45'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./assets/fonts.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <i></i><i></i><i></i>
+        </span>
+        <div>
+          <p class="eyebrow">陶艺烧成控制台</p>
+          <h1>窑序 <span>KILN SEQUENCE</span></h1>
+        </div>
+      </div>
+      <div class="batch-identity">
+        <span class="label">当前批次</span>
+        <strong id="batch-id">—</strong>
+        <span class="status-pill idle" id="status-pill"><i></i><span>待机</span></span>
+      </div>
+      <div class="top-actions">
+        <button class="speed-button icon-button" id="speed-button" type="button" title="切换模拟速度">
+          <span id="speed-label">×4</span>
+        </button>
+        <div class="clock-stack">
+          <span class="label">窑内时间</span>
+          <strong id="sim-clock">00:00</strong>
+        </div>
+        <button class="icon-button" id="sound-button" type="button" aria-pressed="true" title="开关声音">
+          <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span id="sound-label">声音开</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="control-column">
+        <section class="panel control-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">MANUAL CONTROL</p>
+              <h2>燃烧配比</h2>
+            </div>
+            <span class="stage-tag" id="stage-tag">预热</span>
+          </div>
+          <div id="control-sliders"></div>
+          <p class="control-hint" id="control-hint">轻推燃气，缓慢建立窑温。</p>
+          <div class="equipment-list" id="equipment-list"></div>
+        </section>
+
+        <section class="panel action-panel">
+          <button class="primary-button" id="start-button" type="button">开始烧成</button>
+          <div class="button-row">
+            <button class="secondary-button" id="pause-button" type="button" disabled>暂停检查</button>
+            <button class="secondary-button" id="snapshot-button" type="button" disabled>保存快照</button>
+          </div>
+          <button class="text-button danger-text" id="reset-button" type="button">重置当前批次</button>
+        </section>
+
+        <section class="panel scenario-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="eyebrow">VERIFICATION</p>
+              <h2>验收场景</h2>
+            </div>
+            <span class="mini-badge">独立批次</span>
+          </div>
+          <div class="scenario-grid">
+            <button type="button" data-scenario="normal"><i class="scenario-icon">01</i><span>正常生产<small>曲线跟随</small></span></button>
+            <button type="button" data-scenario="fault"><i class="scenario-icon">02</i><span>设备故障<small>燃气阀卡滞</small></span></button>
+            <button type="button" data-scenario="limit"><i class="scenario-icon">03</i><span>参数越限<small>助燃风不足</small></span></button>
+          </div>
+        </section>
+      </aside>
+
+      <section class="kiln-column">
+        <article class="panel kiln-panel">
+          <div class="kiln-toolbar">
+            <div>
+              <p class="eyebrow">CROSS SECTION · 03 PIECES</p>
+              <h2>柴电混合窑 <span>№ 04</span></h2>
+            </div>
+            <div class="kiln-readouts">
+              <div><span>窑温</span><strong id="chamber-temp">20.0<i>°C</i></strong></div>
+              <div><span>升温</span><strong id="temp-rate">+0.0<i>°C/s</i></strong></div>
+            </div>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="kiln-canvas" width="1120" height="650" aria-label="窑体剖面、火焰、通风与三件陶器状态"></canvas>
+            <div class="canvas-corner top-left">A-A 剖面 / 实时</div>
+            <div class="canvas-corner top-right" id="burn-status">燃烧器待机</div>
+            <div class="canvas-corner bottom-left" id="airflow-readout">风量 0% · 窑门 0%</div>
+            <div class="canvas-corner bottom-right">热成像模拟</div>
+            <div class="failure-overlay" id="failure-overlay" role="alertdialog" aria-modal="false" hidden>
+              <div class="failure-card">
+                <span class="alarm-kicker">SAFETY INTERLOCK</span>
+                <div class="alarm-symbol">!</div>
+                <p class="failure-device" id="failure-device">燃气比例阀</p>
+                <h2 id="failure-title">烧成已暂停</h2>
+                <p id="failure-detail"></p>
+                <div class="trigger-readout">
+                  <span>触发值</span>
+                  <strong id="failure-value">—</strong>
+                </div>
+                <button class="primary-button" id="repair-button" type="button">执行维修并验证</button>
+              </div>
+            </div>
+            <div class="recovery-overlay" id="recovery-overlay" hidden>
+              <div class="recovery-ring"><span id="recovery-count">20</span></div>
+              <div>
+                <p class="eyebrow">POST-REPAIR CHECK</p>
+                <strong>恢复验证运行中</strong>
+                <span id="recovery-note">核对报警计数与设备状态…</span>
+              </div>
+            </div>
+          </div>
+          <ol class="phase-track" id="phase-track">
+            <li data-phase="heating"><i></i><span>升温<small>0 — 150 s</small></span><em>待机</em></li>
+            <li data-phase="holding"><i></i><span>保温<small>150 — 230 s</small></span><em>等待</em></li>
+            <li data-phase="cooling"><i></i><span>缓冷<small>230 — 360 s</small></span><em>等待</em></li>
+          </ol>
+        </article>
+
+        <article class="panel trend-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="eyebrow">FIRING CURVE</p>
+              <h2>温度曲线</h2>
+            </div>
+            <div class="legend">
+              <span><i class="target"></i>目标带</span>
+              <span><i class="actual"></i>窑温</span>
+              <span><i class="piece"></i>陶胎</span>
+            </div>
+          </div>
+          <canvas id="trend-canvas" width="900" height="190" aria-label="目标温度带与三件陶器温度曲线"></canvas>
+        </article>
+      </section>
+
+      <aside class="telemetry-column">
+        <section class="panel pieces-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="eyebrow">WARE TELEMETRY</p>
+              <h2>三件作品</h2>
+            </div>
+            <span class="mini-badge" id="goods-badge">0/3 良品</span>
+          </div>
+          <div class="piece-list" id="piece-list"></div>
+        </section>
+
+        <section class="panel event-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="eyebrow">DEVICE JOURNAL</p>
+              <h2>设备启停记录</h2>
+            </div>
+            <span class="mini-badge" id="event-count">0 条</span>
+          </div>
+          <div class="event-log" id="event-log">
+            <p class="empty-note">设备动作将在这里留下不可更改的时间戳。</p>
+          </div>
+        </section>
+
+        <section class="panel metric-panel">
+          <div class="metric"><span>峰值功耗</span><strong id="peak-power">0.00 <i>kW</i></strong></div>
+          <div class="metric"><span>异常处理</span><strong id="exception-count">0 <i>次</i></strong></div>
+          <div class="metric"><span>恢复审计</span><strong id="recovery-status">—</strong></div>
+        </section>
+      </aside>
+    </main>
+
+    <section class="lower-deck">
+      <article class="panel batch-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">BATCH LEDGER</p>
+            <h2>批次结算</h2>
+          </div>
+          <div class="panel-actions">
+            <button class="text-button" id="compare-button" type="button" disabled>并排比较最近两批</button>
+          </div>
+        </div>
+        <div class="ledger-grid">
+          <div class="summary-strip" id="summary-strip">
+            <div><span>良品</span><strong id="good-count">—</strong></div>
+            <div><span>废品</span><strong id="waste-count">—</strong></div>
+            <div><span>峰值功耗</span><strong id="summary-power">—</strong></div>
+            <div class="wide"><span>停机原因</span><strong id="shutdown-reason">等待首轮烧成</strong></div>
+          </div>
+          <div class="snapshot-tray">
+            <div class="tray-heading">
+              <strong>设备快照</strong>
+              <span>保存后可载入为新批次重跑</span>
+            </div>
+            <div id="snapshot-list" class="snapshot-list"><p class="empty-note">尚未保存快照</p></div>
+          </div>
+        </div>
+        <div class="archive-table-wrap">
+          <table class="archive-table">
+            <thead>
+              <tr><th>批次</th><th>状态</th><th>良 / 废</th><th>峰值</th><th>异常</th><th>停机原因</th><th></th></tr>
+            </thead>
+            <tbody id="archive-body"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <dialog class="compare-dialog" id="compare-dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">IMMUTABLE BATCH COMPARISON</p>
+          <h2>批次并排比较</h2>
+        </div>
+        <button class="icon-button close-dialog" id="close-compare" type="button">关闭</button>
+      </div>
+      <div id="compare-content"></div>
+    </dialog>
+
+    <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
