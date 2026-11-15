@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>风蚀高原测绘任务</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>风蚀高原测绘任务</h1>
+      <div class="seed-line">Seed / 布局指纹：<span id="hud-seed">-</span></div>
+    </div>
+    <div class="top-actions">
+      <label>Seed
+        <input id="seed" type="number" value="20261116" />
+      </label>
+      <button id="pause" type="button">⏸ 暂停 (P)</button>
+      <button id="restart" type="button">↻ 重开 (N)</button>
+      <button id="mute" type="button">🔊 声音开 (M)</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stage">
+      <canvas id="game"></canvas>
+      <div id="stranded-banner" class="banner hidden"></div>
+      <div id="overlay" class="overlay hidden">
+        <h2 id="overlay-title"></h2>
+        <p id="overlay-reason"></p>
+        <canvas id="overlay-map" width="260" height="190" class="overlay-map"></canvas>
+        <ul id="overlay-stats"></ul>
+        <div class="overlay-actions">
+          <button id="save-summary" type="button">💾 下载状态摘要 JSON（已自动存本地）</button>
+          <button id="new-game" type="button">↻ 同 Seed 重开</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h2>任务状态</h2>
+      <div class="stat"><span>剩余时间</span><strong id="hud-time">-</strong></div>
+      <div class="stat"><span>测点进度</span><strong id="hud-targets">-</strong></div>
+      <div class="stat"><span>测量杆</span><strong id="hud-poles">-</strong></div>
+      <div class="stat"><span>风力</span><strong id="hud-wind">-</strong></div>
+      <div class="stat"><span>地面抓地力</span><strong id="hud-grip">-</strong></div>
+      <div class="stat"><span>燃料</span><strong id="hud-fuel">-</strong></div>
+      <div class="fuel-track"><div id="fuel-bar"></div></div>
+      <div class="calibration">
+        <span>罗盘校准进度（靠近地标按住 C）</span>
+        <div class="cal-track"><div id="calibration-progress"></div></div>
+      </div>
+
+      <h2>输入反馈</h2>
+      <div class="indicators">
+        <span id="indicator-accelerate">油门 W/↑</span>
+        <span id="indicator-brake">刹车/倒车 S/↓</span>
+        <span id="indicator-left">左转 A/←</span>
+        <span id="indicator-right">右转 D/→</span>
+        <span id="indicator-deploy">布杆 E</span>
+        <span id="indicator-calibrate">校准 C</span>
+        <span id="indicator-recover">检查点 R</span>
+      </div>
+
+      <h2>事件日志</h2>
+      <ul id="events" class="events"></ul>
+
+      <h2>固定 Seed 自检</h2>
+      <div id="layout-check" class="layout-check">自检中…</div>
+
+      <h2>触屏 / 鼠标控制</h2>
+      <div class="dpad">
+        <button id="btn-up" type="button">▲ 油门</button>
+        <div>
+          <button id="btn-left" type="button">◀ 左</button>
+          <button id="btn-right" type="button">右 ▶</button>
+        </div>
+        <button id="btn-down" type="button">▼ 刹/倒</button>
+      </div>
+      <div class="action-row">
+        <button id="btn-deploy" type="button">E 布置测量杆</button>
+        <button id="btn-calibrate" type="button">按住 C 校准</button>
+        <button id="btn-recover" type="button">R 检查点恢复</button>
+      </div>
+      <p class="hint">目标：在 3 个红圈测点各布置 1 杆，再回到绿色营地。高速撞岩台会搁浅并掉设备；粉土抓地力最低。</p>
+    </aside>
+  </main>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
