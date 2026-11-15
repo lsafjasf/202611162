@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#061318">
+  <title>ABYSS // ECHO — 深水声呐测绘</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="noise-layer" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="ABYSS ECHO 首页">
+        <span class="brand-mark" aria-hidden="true">
+          <i></i><i></i><i></i>
+        </span>
+        <span>
+          <strong>ABYSS // ECHO</strong>
+          <small>深水声呐测绘 / DIVE 07</small>
+        </span>
+      </a>
+      <div class="top-status">
+        <span class="status-pill" id="audioStatus"><i></i> 音频待命</span>
+        <span class="mission-clock" id="missionClock">T+ 00:00</span>
+      </div>
+      <div class="top-actions">
+        <button class="icon-button" id="pauseButton" type="button" aria-label="暂停或继续" title="暂停 / 继续 (P)">
+          <span id="pauseIcon">Ⅱ</span><em id="pauseLabel">暂停</em>
+        </button>
+        <button class="icon-button" id="replayButton" type="button" aria-label="重播上一次扫描" title="重播 (R)">
+          <span>↺</span><em>重播</em>
+        </button>
+        <button class="icon-button" id="resetParamsButton" type="button" aria-label="重置声呐参数" title="参数重置">
+          <span>⌁</span><em>重置</em>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="stage-panel" aria-label="声呐测绘视窗">
+        <div class="canvas-shell">
+          <canvas id="sonarCanvas" aria-label="水下网格、声波和距离标尺"></canvas>
+          <div class="canvas-hud canvas-hud--top">
+            <span class="hud-kicker">SECTOR 04</span>
+            <span class="hud-divider"></span>
+            <span>能见度 <b>0.4 m</b></span>
+            <span class="hud-spacer"></span>
+            <span class="hud-live"><i></i> LIVE CANVAS</span>
+          </div>
+          <div class="canvas-hud canvas-hud--bottom">
+            <span id="canvasHint">点击网格选择距离，确认后投放标点</span>
+            <span class="range-legend"><i></i> 10 m 网格</span>
+          </div>
+          <div class="end-overlay" id="endOverlay" hidden>
+            <div class="end-card">
+              <span class="eyebrow" id="endEyebrow">MISSION COMPLETE</span>
+              <h2 id="endTitle">三处障碍已完成测绘</h2>
+              <p id="endCopy">声呐档案已可归档。保存参数并导出原始回波。</p>
+              <div class="end-stats" id="endStats"></div>
+              <button class="primary-button" id="endArchiveButton" type="button">前往归档与复核</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="telemetry-strip" aria-label="实时声呐读数">
+          <article class="telemetry-card">
+            <span class="telemetry-label">频率 / PITCH</span>
+            <strong id="frequencyReadout">620 <small>Hz</small></strong>
+            <div class="mini-meter"><i id="frequencyMeter"></i></div>
+          </article>
+          <article class="telemetry-card">
+            <span class="telemetry-label">声道 / STEREO</span>
+            <strong id="channelReadout">L 64 · R 36</strong>
+            <div class="stereo-meter">
+              <span><i id="leftMeter"></i></span>
+              <span><i id="rightMeter"></i></span>
+            </div>
+          </article>
+          <article class="telemetry-card">
+            <span class="telemetry-label">回波延迟 / DELAY</span>
+            <strong id="delayReadout">— <small>ms</small></strong>
+            <div class="mini-meter"><i id="delayMeter"></i></div>
+          </article>
+          <article class="telemetry-card telemetry-card--peak">
+            <span class="telemetry-label">峰值 / PEAK</span>
+            <strong id="peakReadout">— <small>dBFS</small></strong>
+            <div class="peak-wave" id="peakWave" aria-hidden="true"></div>
+          </article>
+          <span class="convergence-badge" id="convergenceBadge"><i></i> 参数已同步</span>
+        </div>
+      </section>
+
+      <aside class="side-rail" aria-label="任务与声呐控制">
+        <section class="panel mission-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">MISSION 07</span>
+              <h2>盲水测绘</h2>
+            </div>
+            <span class="mission-state" id="missionState">待命</span>
+          </div>
+          <p class="mission-copy">三次回声，三道障碍。用延迟判断距离，用波形判断浅滩或岩壁。</p>
+
+          <div class="resource-grid">
+            <div class="resource">
+              <span>声呐机会</span>
+              <strong id="chargeReadout">7</strong>
+              <div class="pip-row" id="chargePips"></div>
+            </div>
+            <div class="resource">
+              <span>换能器热量</span>
+              <strong id="heatReadout">18<small>%</small></strong>
+              <div class="heat-track"><i id="heatBar"></i></div>
+            </div>
+            <div class="resource">
+              <span>已定位</span>
+              <strong id="foundReadout">0<small>/3</small></strong>
+              <div class="found-row" id="foundPips"><i></i><i></i><i></i></div>
+            </div>
+          </div>
+
+          <button class="fire-button" id="fireButton" type="button">
+            <span class="fire-rings" aria-hidden="true"><i></i></span>
+            <span><strong>发射声呐</strong><small>SPACE / 消耗 1 次机会</small></span>
+            <kbd>SPACE</kbd>
+          </button>
+          <p class="fire-note" id="fireNote">换能器冷却至安全温度后即可发射。</p>
+        </section>
+
+        <section class="panel control-panel">
+          <div class="panel-heading panel-heading--compact">
+            <div>
+              <span class="eyebrow">TRANSDUCER</span>
+              <h2>声学参数</h2>
+            </div>
+            <button class="text-button" id="auditionButton" type="button">试听</button>
+          </div>
+          <label class="range-control" for="frequencySlider">
+            <span><b>脉冲频率</b><output id="frequencyValue">620 Hz</output></span>
+            <input id="frequencySlider" type="range" min="280" max="920" step="10" value="620">
+            <small><i>低</i><i>高</i></small>
+          </label>
+          <label class="range-control" for="beamSlider">
+            <span><b>声束方位</b><output id="beamValue">L 64 / R 36</output></span>
+            <input id="beamSlider" type="range" min="-100" max="100" step="1" value="-28">
+            <small><i>左舷 L</i><i>右舷 R</i></small>
+          </label>
+          <label class="range-control" for="beatSlider">
+            <span><b>脉冲节拍</b><output id="beatValue">84 BPM</output></span>
+            <input id="beatSlider" type="range" min="48" max="132" step="2" value="84">
+            <small><i>慢</i><i>快</i></small>
+          </label>
+          <label class="range-control" for="gainSlider">
+            <span><b>输出增益</b><output id="gainValue">72%</output></span>
+            <input id="gainSlider" type="range" min="30" max="100" step="1" value="72">
+            <small><i>静</i><i>响</i></small>
+          </label>
+        </section>
+
+        <section class="panel echo-panel">
+          <div class="panel-heading panel-heading--compact">
+            <div>
+              <span class="eyebrow">RETURNS</span>
+              <h2>回波记录</h2>
+            </div>
+            <span class="micro-label" id="scanCount">NO SCAN</span>
+          </div>
+          <div class="echo-list" id="echoList">
+            <div class="echo-empty">发射声呐后，三组回波将在此展开。</div>
+          </div>
+          <div class="mark-control">
+            <div class="mark-selection">
+              <span>标点距离</span>
+              <strong id="selectedDistance">未选择</strong>
+            </div>
+            <button class="secondary-button" id="markButton" type="button" disabled>确认标点</button>
+          </div>
+          <p class="mark-note">错误标点同样消耗一次声呐机会；容差为 ±4 m。</p>
+        </section>
+      </aside>
+    </main>
+
+    <section class="analysis-deck">
+      <article class="panel audit-panel" aria-labelledby="verificationTitle">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">AUDIO PROOF</span>
+            <h2 id="verificationTitle">三维音频验证</h2>
+          </div>
+          <button class="secondary-button" id="runVerificationButton" type="button">运行离线验证</button>
+        </div>
+        <p class="panel-copy">通过 OfflineAudioContext 渲染真实声音，分别检测音高、左右声道能量与节拍间隔，而不是只读取界面数字。</p>
+        <div class="verification-grid">
+          <div class="verify-card" data-test="frequency">
+            <span class="verify-icon">ƒ</span>
+            <div><b>频段变化</b><p id="frequencyTestText">等待验证</p></div>
+            <span class="verify-result" id="frequencyTestResult">—</span>
+          </div>
+          <div class="verify-card" data-test="stereo">
+            <span class="verify-icon">L/R</span>
+            <div><b>左右声道</b><p id="stereoTestText">等待验证</p></div>
+            <span class="verify-result" id="stereoTestResult">—</span>
+          </div>
+          <div class="verify-card" data-test="beat">
+            <span class="verify-icon">♩</span>
+            <div><b>节拍维度</b><p id="beatTestText">等待验证</p></div>
+            <span class="verify-result" id="beatTestResult">—</span>
+          </div>
+        </div>
+        <div class="audit-foot">
+          <span id="verificationSummary">尚未运行。离线渲染不依赖扬声器音量。</span>
+          <progress id="verificationProgress" max="3" value="0" hidden></progress>
+        </div>
+      </article>
+
+      <article class="panel archive-panel" aria-labelledby="archiveTitle">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">DIVE ARCHIVE</span>
+            <h2 id="archiveTitle">存档与导出一致性</h2>
+          </div>
+          <span class="archive-state" id="archiveState">未归档</span>
+        </div>
+        <div class="safety-checks" aria-label="导出安全检查">
+          <span id="checkSilence"><i></i> 无静音</span>
+          <span id="checkClip"><i></i> 无削波</span>
+          <span id="checkChannels"><i></i> 双声道完整</span>
+        </div>
+        <div class="export-readout">
+          <div><span>时长</span><strong id="exportDuration">—</strong></div>
+          <div><span>峰值 L / R</span><strong id="exportPeaks">— / —</strong></div>
+          <div><span>回波延迟</span><strong id="exportDelay">—</strong></div>
+        </div>
+        <div class="archive-actions">
+          <button class="primary-button" id="exportButton" type="button">渲染并导出 WAV</button>
+          <button class="secondary-button" id="saveButton" type="button" disabled>保存参数</button>
+          <button class="secondary-button" id="loadButton" type="button" disabled>重载并复测</button>
+        </div>
+        <div class="consistency-report" id="consistencyReport">
+          <span class="report-dot"></span>
+          <p>完成一次导出、保存参数并重载后，将在此比较两次文件的时长与关键峰值。</p>
+        </div>
+      </article>
+    </section>
+    <footer class="site-footer">
+      <span>ABYSS ECHO / PROCEDURAL SONAR LAB</span>
+      <span>所有声音由 Web Audio API 实时合成 · 无预录音频文件</span>
+    </footer>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
