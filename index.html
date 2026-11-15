@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>沿海农田盐渍化治理 · 30天模拟</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>沿海农田盐渍化治理模拟</h1>
+  <div class="seed-bar">
+    <label>种子 seed：<input id="seedInput" type="text" value="20261116"></label>
+    <button id="btnNewSeed">随机种子</button>
+    <button id="btnRestart">重开（同 seed）</button>
+    <button id="btnPause">暂停</button>
+    <label>倍速
+      <select id="speedSelect">
+        <option value="1">1×</option>
+        <option value="2" selected>2×</option>
+        <option value="4">4×</option>
+        <option value="8">8×</option>
+      </select>
+    </label>
+  </div>
+</header>
+<main>
+  <section class="left">
+    <canvas id="fieldCanvas" width="720" height="460"></canvas>
+    <div class="controls">
+      <button id="btnIrrigate">淡水灌溉（关）</button>
+      <button id="btnDrain">排水泵（关）</button>
+      <button id="btnMulch">铺设覆盖物</button>
+      <span class="hint">灌溉/排水为开关式，每小时消耗资源；覆盖物一次性铺设一片。</span>
+    </div>
+    <div class="replay-row">
+      <button id="btnExport">导出操作序列</button>
+      <button id="btnImport">导入并复现</button>
+      <button id="btnReplay">高速复现当前序列</button>
+      <button id="btnReport">生成验证报告（稳态/临界/失败 + 双策略）</button>
+    </div>
+  </section>
+  <section class="right">
+    <h2>当前环境指标</h2>
+    <table id="metricsTable"></table>
+    <h2>最近一次操作结果</h2>
+    <div id="lastAction" class="last-action">尚无操作。</div>
+    <h2>事件 / 操作日志</h2>
+    <div id="logBox" class="log-box"></div>
+  </section>
+</main>
+<div id="modal" class="modal hidden">
+  <div class="modal-inner">
+    <h2 id="modalTitle"></h2>
+    <pre id="modalBody"></pre>
+    <div class="modal-actions">
+      <textarea id="seqText" rows="8" placeholder='{"seed":"...","actions":[...]}'></textarea>
+      <button id="modalClose">关闭</button>
+      <button id="modalRun" class="hidden">导入运行</button>
+    </div>
+  </div>
+</div>
+<script src="js/rng.js"></script>
+<script src="js/config.js"></script>
+<script src="js/simulation.js"></script>
+<script src="js/policies.js"></script>
+<script src="js/report.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/main.js"></script>
+<script src="js/ui_actions.js"></script>
+</body>
+</html>
