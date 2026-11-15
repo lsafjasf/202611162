@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>提示音字幕对齐工作台</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%235b8bd6'/%3E%3Cpath d='M3 10V6h2l2-2v8L5 10H3zm8-4a3 3 0 010 4' stroke='white' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>提示音 · 字幕对齐工作台</h1>
+      <div class="transport">
+        <button id="play-btn" type="button">播放</button>
+        <button id="pause-btn" type="button">暂停</button>
+        <button id="replay-btn" type="button">重播</button>
+        <button id="render-wave-btn" type="button">渲染波形</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel panel-left">
+        <h2>合成参数（当前提示音 <span id="selected-cue-name"></span>）</h2>
+        <label class="cue-select-row">
+          选择提示音
+          <select id="cue-select" aria-label="选择提示音"></select>
+        </label>
+        <div id="param-fields"></div>
+        <button id="reset-params" type="button">参数重置为默认</button>
+
+        <h2>实时仪表</h2>
+        <div class="meters">
+          <div><span>左声道峰值</span><strong id="meter-l">0.000</strong></div>
+          <div><span>右声道峰值</span><strong id="meter-r">0.000</strong></div>
+          <div><span>主频率</span><strong id="meter-freq">—</strong></div>
+          <div><span>声道设置</span><strong id="meter-pan">0.00</strong></div>
+          <div><span>延迟设置</span><strong id="meter-delay">120 ms</strong></div>
+        </div>
+      </section>
+
+      <section class="panel panel-main">
+        <h2>Canvas 时间轴与波形（拖拽色块移动，边缘手柄改入出点，竖线改词时间）</h2>
+        <div class="canvas-wrap">
+          <canvas id="timeline" aria-label="字幕时间轴与波形"></canvas>
+        </div>
+        <h2>校验状态</h2>
+        <div id="validation" class="status-box"></div>
+        <h2>导出前检查（静音 / 削波 / 声道缺失）</h2>
+        <div id="export-checks" class="status-box">尚未导出</div>
+      </section>
+
+      <section class="panel panel-right">
+        <h2>保存与导入导出</h2>
+        <button id="save-btn" type="button">保存参数</button>
+        <button id="reload-btn" type="button">重新载入参数</button>
+        <button id="vtt-btn" type="button">导出 WebVTT</button>
+        <label class="file-btn">
+          导入 WebVTT
+          <input type="file" id="vtt-file" accept=".vtt,text/vtt" hidden>
+        </label>
+        <button id="wav-btn" type="button">检查并导出 WAV</button>
+        <h2>事件日志</h2>
+        <div id="event-log" class="event-log"></div>
+      </section>
+    </main>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>
