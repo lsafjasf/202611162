@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#071923" />
+    <title>极夜渡冰 · 维修队渡河</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="aurora aurora-a"></div>
+    <div class="aurora aurora-b"></div>
+    <div id="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">IF</span>
+          <div>
+            <strong>极夜渡冰</strong>
+            <span>维修队渡河行动</span>
+          </div>
+        </div>
+        <div class="seed-box">
+          <label for="seedInput">固定种子</label>
+          <input id="seedInput" inputmode="numeric" value="20261116" />
+          <button id="seedApply" class="chip-button" title="使用该种子重新开局">应用</button>
+          <span id="layoutCheck" class="status-chip" title="当前种子生成的地图与任务指纹">布局 —</span>
+        </div>
+        <div class="top-actions">
+          <button id="soundToggle" class="icon-button" aria-pressed="true" title="声音开关">声音 开</button>
+          <button id="pauseButton" class="icon-button" title="暂停游戏">暂停</button>
+          <button id="restartButton" class="icon-button" title="用同一种子重开">重开</button>
+          <button id="failureDemo" class="icon-button danger" title="演示一次靠岸失败">失败场景</button>
+        </div>
+      </header>
+
+      <main class="stage-shell">
+        <canvas id="gameCanvas" aria-label="冰河渡船游戏画面"></canvas>
+        <div class="vignette"></div>
+
+        <section class="panel mission-panel">
+          <div class="panel-kicker">任务 03 · 破冰转运</div>
+          <h1>送维修队过河</h1>
+          <p class="mission-copy">完成三次往返，把六名维修员送到东岸。冰情随水流变化，请控制靠岸角度。</p>
+          <div id="roundPips" class="round-pips" aria-label="往返进度"></div>
+          <div class="objective-row">
+            <div><span>往返</span><strong id="roundValue">0 / 3</strong></div>
+            <div><span>靠岸</span><strong id="dockValue">0 / 6</strong></div>
+            <div><span>送达</span><strong id="crewValue">0 / 6</strong></div>
+          </div>
+          <div class="mini-rule"></div>
+          <div class="meter-list">
+            <div class="meter-row">
+              <span>燃油</span><div class="meter"><i id="fuelBar"></i></div><b id="fuelValue">100</b>
+            </div>
+            <div class="meter-row">
+              <span>船体</span><div class="meter"><i id="hullBar"></i></div><b id="hullValue">100</b>
+            </div>
+            <div class="meter-row">
+              <span>缆索</span><div class="meter"><i id="cableBar"></i></div><b id="cableValue">100</b>
+            </div>
+          </div>
+          <div class="load-line">
+            <span>当前载重</span><strong id="loadValue">2.8 / 4.0 t</strong>
+            <span id="overloadFlag" class="load-flag">机动正常</span>
+          </div>
+        </section>
+
+        <section class="panel control-panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-kicker">实时操控</div>
+              <h2>驾驶台</h2>
+            </div>
+            <span id="runState" class="state-dot">航行</span>
+          </div>
+          <div class="instrument-grid">
+            <div class="instrument">
+              <span>推力</span><strong id="throttleReadout">+0%</strong>
+              <div class="meter slim"><i id="throttleBar"></i></div>
+            </div>
+            <div class="instrument">
+              <span>船头</span><strong id="headingReadout">000°</strong>
+              <div class="heading-dial"><i id="headingNeedle"></i></div>
+            </div>
+            <div class="instrument wide">
+              <span>缆绳</span><strong id="cableReadout">待命</strong>
+              <div class="meter slim cable"><i id="tensionBar"></i></div>
+            </div>
+          </div>
+          <div class="key-grid">
+            <kbd>W / S</kbd><span>推进 / 倒车</span>
+            <kbd>A / D</kbd><span>左舵 / 右舵</span>
+            <kbd>C</kbd><span>系上最近冰锚</span>
+            <kbd>Q / E</kbd><span>收缆 / 放缆</span>
+          </div>
+          <div class="cable-target">
+            <span class="target-light"></span>
+            <span id="cableTargetText">靠近黄标冰锚后按 C 系缆</span>
+          </div>
+          <button id="summaryButton" class="text-button">查看上次完成摘要</button>
+        </section>
+
+        <div id="inputFlash" class="input-flash" aria-live="polite"></div>
+        <div id="eventFeed" class="event-feed" aria-live="polite"></div>
+
+        <div class="touch-controls" aria-label="触摸操控">
+          <div class="touch-group">
+            <button data-hold="left" class="touch-button">◀<small>左舵</small></button>
+            <button data-hold="right" class="touch-button">▶<small>右舵</small></button>
+          </div>
+          <div class="touch-group">
+            <button data-hold="reverse" class="touch-button">−<small>倒车</small></button>
+            <button data-hold="thrust" class="touch-button primary">+<small>推进</small></button>
+          </div>
+          <div class="touch-group">
+            <button id="touchCable" class="touch-button">系<small>缆绳</small></button>
+            <button data-hold="reel" class="touch-button">收<small>收缆</small></button>
+            <button data-hold="pay" class="touch-button">放<small>放缆</small></button>
+          </div>
+        </div>
+
+        <div id="modal" class="modal-layer" hidden>
+          <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div id="modalBadge" class="modal-badge">航行报告</div>
+            <h2 id="modalTitle">已暂停</h2>
+            <p id="modalCopy"></p>
+            <div id="modalStats" class="modal-stats"></div>
+            <div id="modalPath" class="modal-path"></div>
+            <div id="modalReasons" class="modal-reasons"></div>
+            <div id="modalActions" class="modal-actions"></div>
+          </div>
+        </div>
+      </main>
+      <footer class="statusbar">
+        <span id="clockReadout">00:00.0</span>
+        <span id="checkpointReadout">检查点：出发港</span>
+        <span id="summaryReadout">摘要尚未生成</span>
+        <span class="footer-note">固定步长 60 Hz · 输入与场景可复现</span>
+      </footer>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

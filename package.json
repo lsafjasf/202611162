@@ -1,0 +1,11 @@
+{
+  "name": "ice-ferry",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "check": "node --check src/*.js && node --check tests/*.js && node --check server.mjs"
+  }
+}
