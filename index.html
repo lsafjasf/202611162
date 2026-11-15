@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自动闪避 Ducking 演示 — 音乐 / 警报</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>自动闪避（Sidechain Ducking）实验室</h1>
+  <p>音乐 + 警报实时合成 · 包络跟随闪避 · WAV 导出与一致性验证</p>
+</header>
+<main>
+  <section class="panel transport">
+    <h2>播放控制</h2>
+    <div class="btn-row">
+      <button id="btnPlay">▶ 播放</button>
+      <button id="btnPause" disabled>⏸ 暂停</button>
+      <button id="btnReplay" disabled>⟲ 重播</button>
+      <button id="btnResetParams">参数重置</button>
+    </div>
+    <div class="btn-row">
+      <button id="btnExport" disabled>⬇ 导出混音 WAV</button>
+      <button id="btnSaveParams">保存参数</button>
+      <button id="btnReloadParams">重新载入参数</button>
+      <button id="btnVerify">运行三维验证</button>
+    </div>
+    <div id="transportStatus" class="status">就绪。点击“播放”开始实时合成。</div>
+  </section>
+  <section class="panel">
+    <h2>闪避与合成参数</h2>
+    <div class="controls" id="controls">
+      <label>触发阈值 <span id="v-threshold"></span>
+        <input type="range" id="p-threshold" min="0" max="0.9" step="0.01">
+      </label>
+      <label>释放时间 (ms) <span id="v-releaseMs"></span>
+        <input type="range" id="p-releaseMs" min="50" max="2000" step="10">
+      </label>
+      <label>最大衰减 (dB) <span id="v-maxAttenDb"></span>
+        <input type="range" id="p-maxAttenDb" min="0" max="40" step="0.5">
+      </label>
+      <label>节拍 BPM <span id="v-bpm"></span>
+        <input type="range" id="p-bpm" min="60" max="180" step="1">
+      </label>
+      <label>音乐滤波截止 (Hz) <span id="v-cutoff"></span>
+        <input type="range" id="p-cutoff" min="300" max="8000" step="50">
+      </label>
+      <label>立体声宽度 <span id="v-width"></span>
+        <input type="range" id="p-width" min="0" max="1" step="0.05">
+      </label>
+      <label>警报音高 (Hz) <span id="v-alarmHz"></span>
+        <input type="range" id="p-alarmHz" min="440" max="1760" step="10">
+      </label>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>包络与电平</h2>
+    <canvas id="scope" width="860" height="240"></canvas>
+    <div class="legend">
+      <span class="sw alarm"></span>警报检测包络
+      <span class="sw duck"></span>音乐增益包络
+      <span class="sw lvl"></span>输出电平 L/R
+    </div>
+  </section>
+  <section class="panel meters">
+    <h2>实时读数</h2>
+    <div class="meter-grid">
+      <div class="meter"><b>主导频率</b><span id="m-freq">— Hz</span></div>
+      <div class="meter"><b>左声道 RMS</b><span id="m-rmsL">—</span></div>
+      <div class="meter"><b>右声道 RMS</b><span id="m-rmsR">—</span></div>
+      <div class="meter"><b>闪避延迟</b><span id="m-delay">— ms</span></div>
+      <div class="meter"><b>峰值</b><span id="m-peak">—</span></div>
+      <div class="meter"><b>当前增益</b><span id="m-gain">— dB</span></div>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>导出前检查</h2>
+    <div id="exportChecks" class="checks">尚未导出。</div>
+    <h2>保存 / 重载一致性</h2>
+    <div id="consistencyReport" class="checks">尚未进行对比。</div>
+    <h2>三维验证（声道 / 频段 / 节拍）</h2>
+    <div id="verifyReport" class="checks">尚未运行。</div>
+  </section>
+</main>
+<script src="js/params.js"></script>
+<script src="js/duck.js"></script>
+<script src="js/synth.js"></script>
+<script src="js/exporter.js"></script>
+<script src="js/meters.js"></script>
+<script src="js/verify.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
