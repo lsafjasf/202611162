@@ -1,0 +1,79 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: #14181f; color: #dde3ec;
+}
+header {
+  display: flex; align-items: baseline; gap: 16px;
+  padding: 10px 18px; background: #1c2230; border-bottom: 1px solid #2c3547;
+}
+header h1 { font-size: 20px; margin: 0; }
+#batchInfo { color: #8fa3c0; font-size: 14px; }
+main {
+  display: grid; gap: 12px; padding: 12px;
+  grid-template-columns: 2fr 1fr;
+}
+.panel {
+  background: #1c2230; border: 1px solid #2c3547; border-radius: 8px;
+  padding: 12px;
+}
+.panel h2 { font-size: 15px; margin: 0 0 8px; color: #9fb6d8; }
+.panel h3 { font-size: 13px; margin: 10px 0 6px; color: #9fb6d8; }
+.canvas-panel { grid-column: 1 / -1; }
+#lineCanvas { width: 100%; background: #0d1017; border-radius: 6px; display: block; }
+#statusBar { display: flex; gap: 18px; margin-top: 6px; font-size: 13px; }
+.state-running { color: #6fdc8c; }
+.state-paused { color: #f0c541; }
+.state-stopped { color: #ef6461; }
+.hidden { display: none !important; }
+#observeTag { color: #f0c541; }
+.ctrl { margin-bottom: 10px; font-size: 13px; }
+.ctrl label { display: block; margin-bottom: 3px; }
+.ctrl .lim { color: #6b7a94; font-size: 11px; }
+.ctrl input[type=range] { width: 100%; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+button {
+  background: #2b3a55; color: #dde3ec; border: 1px solid #3d4f73;
+  border-radius: 5px; padding: 6px 12px; cursor: pointer; font-size: 13px;
+}
+button:hover { background: #35486b; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+#deviceTable { width: 100%; border-collapse: collapse; font-size: 13px; }
+#deviceTable th, #deviceTable td {
+  border-bottom: 1px solid #2c3547; padding: 5px 6px; text-align: left;
+}
+.dev-on { color: #6fdc8c; }
+.dev-off { color: #8fa3c0; }
+.dev-fault { color: #ef6461; font-weight: bold; }
+#powerNow { margin-top: 8px; font-size: 13px; color: #f0c541; }
+.log-panel { max-height: 220px; overflow-y: auto; }
+#eventLog { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.6; }
+#eventLog li.evt-fault { color: #ef6461; }
+#eventLog li.evt-warn { color: #f0c541; }
+#eventLog li.evt-ok { color: #6fdc8c; }
+.snapshot-panel { grid-column: 1 / -1; }
+.snap-item, .batch-item {
+  display: inline-block; margin: 4px 6px 4px 0; padding: 6px 10px;
+  background: #232b3d; border: 1px solid #33405c; border-radius: 6px;
+  font-size: 12px; cursor: pointer;
+}
+.snap-item.selected, .batch-item.selected { border-color: #f0c541; }
+.batch-item { cursor: pointer; }
+#compareView { margin-top: 10px; }
+#compareView table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#compareView th, #compareView td {
+  border: 1px solid #2c3547; padding: 6px 8px; text-align: left;
+}
+#compareView th { background: #232b3d; }
+#modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center; z-index: 10;
+}
+#modalBox {
+  background: #1c2230; border: 1px solid #3d4f73; border-radius: 10px;
+  padding: 20px 24px; width: 460px; max-width: 92vw;
+}
+#modalBox h2 { margin: 0 0 10px; font-size: 17px; }
+#modalBody { font-size: 14px; line-height: 1.7; }
+#modalBody .fault-val { color: #ef6461; font-weight: bold; }
+#modalBody .ok-val { color: #6fdc8c; }

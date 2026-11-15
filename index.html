@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>玻璃退火线模拟器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>玻璃退火线模拟器</h1>
+  <div id="batchInfo">批次 #1 · 目标: 3 块合格玻璃</div>
+</header>
+
+<main>
+  <section class="panel canvas-panel">
+    <canvas id="lineCanvas" width="960" height="320"></canvas>
+    <div id="statusBar">
+      <span id="simClock">t = 0.0 s</span>
+      <span id="simState" class="state-running">运行中</span>
+      <span id="observeTag" class="hidden">故障恢复观察期</span>
+    </div>
+  </section>
+
+  <section class="panel controls">
+    <h2>工艺参数</h2>
+    <div class="ctrl">
+      <label>传送速度 <b id="vSpeedVal"></b> m/min <span class="lim">(0.5 – 6.0)</span></label>
+      <input type="range" id="inSpeed" min="0.5" max="8" step="0.1" value="2.5">
+    </div>
+    <div class="ctrl">
+      <label>热风温度 <b id="vTempVal"></b> °C <span class="lim">(300 – 700)</span></label>
+      <input type="range" id="inTemp" min="200" max="800" step="5" value="540">
+    </div>
+    <div class="ctrl">
+      <label>冷却风量 <b id="vFlowVal"></b> % <span class="lim">(10 – 100)</span></label>
+      <input type="range" id="inFlow" min="0" max="120" step="1" value="55">
+    </div>
+    <div class="ctrl">
+      <label>玻璃厚度(来料) <b id="vThickVal"></b> mm</label>
+      <input type="range" id="inThick" min="3" max="12" step="0.5" value="6">
+    </div>
+    <div class="btn-row">
+      <button id="btnPause">暂停检查</button>
+      <button id="btnReset">重置本批次</button>
+      <button id="btnFault">注入设备故障</button>
+      <button id="btnSound">声音: 关</button>
+    </div>
+  </section>
+
+  <section class="panel devices">
+    <h2>关键设备状态</h2>
+    <table id="deviceTable">
+      <thead><tr><th>设备</th><th>状态</th><th>实时值</th><th>本次启停</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div id="powerNow">当前功耗: 0 kW · 峰值: 0 kW</div>
+  </section>
+
+  <section class="panel log-panel">
+    <h2>事件日志(设备启停 / 异常处理)</h2>
+    <ul id="eventLog"></ul>
+  </section>
+
+  <section class="panel snapshot-panel">
+    <h2>快照与对比</h2>
+    <div class="btn-row">
+      <button id="btnSnapshot">保存设备快照</button>
+      <button id="btnRerun">用选中快照参数重跑一批</button>
+    </div>
+    <div id="snapshotList"></div>
+    <h3>已完成批次(只读)</h3>
+    <div id="batchHistory"></div>
+    <div class="btn-row">
+      <button id="btnCompare">并排比较选中的两批</button>
+    </div>
+    <div id="compareView"></div>
+  </section>
+</main>
+
+<div id="modal" class="hidden">
+  <div id="modalBox">
+    <h2 id="modalTitle"></h2>
+    <div id="modalBody"></div>
+    <div class="btn-row" id="modalBtns"></div>
+  </div>
+</div>
+
+<script src="js/audio.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/render.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
