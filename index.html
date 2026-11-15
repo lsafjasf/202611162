@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07110f" />
+    <title>三粉混配 · 均匀度控制台</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div>
+            <p class="eyebrow">POWDER PROCESS LAB / 03</p>
+            <h1>三粉混配 <span>均匀度控制台</span></h1>
+          </div>
+        </div>
+        <div class="campaign-strip" aria-label="批次目标进度">
+          <div class="campaign-copy">
+            <span>验收目标</span>
+            <strong><b id="acceptedCount">0</b> / 3 批</strong>
+          </div>
+          <div id="campaignLights" class="campaign-lights"></div>
+        </div>
+        <div class="top-actions">
+          <button id="soundToggle" class="icon-button" type="button" aria-pressed="true" title="开关声音">
+            <span id="soundIcon">◖</span><span class="action-label">声音</span>
+          </button>
+          <button id="pauseButton" class="button button-ghost" type="button">暂停检查</button>
+          <button id="resetButton" class="button button-ghost" type="button">重置当前批次</button>
+        </div>
+      </header>
+
+      <section class="status-rail" aria-label="系统状态">
+        <div class="rail-item"><span class="status-dot ok"></span><span id="systemState">系统待机</span></div>
+        <div class="rail-item">批次 <strong id="batchNumber">B-001</strong></div>
+        <div class="rail-item">阶段 <strong id="stageLabel">待开机</strong></div>
+        <div class="rail-item">仿真时钟 <strong id="clockLabel">00:00.0</strong></div>
+        <div class="rail-spacer"></div>
+        <button id="scenarioHelp" class="text-button" type="button">验收场景说明 ↗</button>
+      </section>
+
+      <div class="workspace-grid">
+        <aside class="panel control-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">RECIPE / 配方</p>
+              <h2>批次参数</h2>
+            </div>
+            <span id="recipeStatus" class="mini-badge">待确认</span>
+          </div>
+
+          <div class="field-group">
+            <div class="field-label"><span>加料顺序</span><span class="field-note">点击调整先后</span></div>
+            <div id="feedOrder" class="feed-order" aria-label="加料顺序"></div>
+            <p class="helper">推荐顺序：<b>填充粉 → 基体粉 → 色粉</b>，色粉最后加入可减少扬尘。</p>
+          </div>
+
+          <label class="field-group range-field" for="rpmInput">
+            <span class="field-label"><span>滚筒转速</span><output id="rpmOutput">82 rpm</output></span>
+            <input id="rpmInput" type="range" min="10" max="150" step="1" value="82" />
+            <span class="range-scale"><i>10</i><i class="safe-band">安全区 55–105</i><i>150</i></span>
+            <span class="field-alert" id="rpmAlert"></span>
+          </label>
+
+          <label class="field-group range-field" for="timeInput">
+            <span class="field-label"><span>混合时间</span><output id="timeOutput">42 s</output></span>
+            <input id="timeInput" type="range" min="5" max="150" step="1" value="42" />
+            <span class="range-scale"><i>5</i><i class="safe-band">安全区 30–95 s</i><i>150</i></span>
+            <span class="field-alert" id="timeAlert"></span>
+          </label>
+
+          <label class="field-group range-field" for="valveInput">
+            <span class="field-label"><span>出料阀开度</span><output id="valveOutput">44%</output></span>
+            <input id="valveInput" type="range" min="0" max="100" step="1" value="44" />
+            <span class="range-scale"><i>0</i><i class="safe-band">安全区 20–65%</i><i>100</i></span>
+            <span class="field-alert" id="valveAlert"></span>
+          </label>
+
+          <div class="scenario-block">
+            <div class="field-label"><span>故障注入</span><span class="field-note">用于设备故障验收</span></div>
+            <select id="faultSelect" aria-label="故障注入类型">
+              <option value="">不注入故障</option>
+              <option value="motor_overheat">主电机 · 绕组过热</option>
+              <option value="fan_stall">除尘风机 · 风量失速</option>
+              <option value="valve_jam">出料阀 · 阀位卡滞</option>
+              <option value="inverter_comm">变频器 · 通讯中断</option>
+            </select>
+            <button id="presetFault" class="preset-link" type="button">装载设备故障验收参数</button>
+          </div>
+
+          <div class="primary-actions">
+            <button id="startButton" class="button button-primary" type="button">启动生产批次</button>
+            <label class="speed-control" title="仿真速度">
+              <span>速度</span>
+              <select id="speedSelect">
+                <option value="1">1×</option>
+                <option value="2" selected>2×</option>
+                <option value="4">4×</option>
+              </select>
+            </label>
+          </div>
+        </aside>
+
+        <section class="panel stage-panel" aria-label="混合筒实时剖面">
+          <div class="stage-topline">
+            <div>
+              <p class="section-kicker">LIVE SECTION / 实时剖面</p>
+              <h2>V-240 双螺旋混配筒</h2>
+            </div>
+            <div class="stage-key">
+              <span><i class="powder-dot powder-a"></i>基体</span>
+              <span><i class="powder-dot powder-b"></i>填充</span>
+              <span><i class="powder-dot powder-c"></i>色粉</span>
+            </div>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="mixerCanvas" aria-label="混配筒剖面、粉末层级和取样点"></canvas>
+            <div id="canvasOverlay" class="canvas-overlay">
+              <span class="overlay-label">实时剖面</span>
+            </div>
+            <div id="pauseVeil" class="pause-veil" hidden>
+              <span>II</span>
+              <strong>检查暂停</strong>
+              <small>设备状态与取样数据已冻结</small>
+            </div>
+          </div>
+          <div class="stage-footer">
+            <div class="metric-inline">
+              <span>均匀度</span>
+              <strong id="uniformityValue">--</strong>
+              <div class="meter"><i id="uniformityBar"></i></div>
+            </div>
+            <div class="metric-inline">
+              <span>团聚指数</span>
+              <strong id="agglomerationValue">0.0</strong>
+              <div class="meter danger"><i id="agglomerationBar"></i></div>
+            </div>
+            <div class="metric-inline">
+              <span>夹带风险</span>
+              <strong id="entrainmentValue">0.0</strong>
+              <div class="meter amber"><i id="entrainmentBar"></i></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel telemetry-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">TELEMETRY / 遥测</p>
+              <h2>设备与功耗</h2>
+            </div>
+            <span id="faultBadge" class="mini-badge quiet">无告警</span>
+          </div>
+          <div class="power-card">
+            <div>
+              <span>当前功耗</span>
+              <strong><b id="powerValue">0.0</b><small> kW</small></strong>
+            </div>
+            <div class="power-spark"><canvas id="powerCanvas" aria-label="功耗曲线"></canvas></div>
+            <p>峰值 <b id="peakPowerValue">0.0 kW</b></p>
+          </div>
+          <div id="equipmentList" class="equipment-list"></div>
+          <div class="samples-card">
+            <div class="field-label"><span>五点取样</span><span id="sampleStatus" class="field-note">等待取样</span></div>
+            <div id="sampleReadings" class="sample-readings"></div>
+          </div>
+          <div class="stage-progress">
+            <div class="progress-line"><i id="batchProgressBar"></i></div>
+            <span id="batchProgressText">准备批次</span>
+          </div>
+        </aside>
+      </div>
+
+      <section class="bottom-grid">
+        <div class="panel log-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="section-kicker">EVENT TRACE / 启停时刻</p>
+              <h2>设备事件流</h2>
+            </div>
+            <span id="eventCount" class="mini-badge quiet">0 条</span>
+          </div>
+          <div id="eventLog" class="event-log" aria-live="polite"></div>
+        </div>
+
+        <div class="panel snapshot-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="section-kicker">SNAPSHOT / 快照复跑</p>
+              <h2>双跑对照</h2>
+            </div>
+            <button id="saveSnapshotButton" class="button button-small" type="button">保存设备快照</button>
+          </div>
+          <p id="snapshotHint" class="panel-copy">完成一批后保存快照，修改参数复跑，即可将两次结果并排比较。</p>
+          <div id="snapshotList" class="snapshot-list"></div>
+          <div id="comparisonTray" class="comparison-tray">
+            <span>选择两条已完成批次记录进行对比</span>
+            <button id="compareButton" class="button button-small" type="button" disabled>并排比较</button>
+          </div>
+          <p id="snapshotCompareNote" class="compare-note"></p>
+        </div>
+      </section>
+
+      <section class="panel batch-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">BATCH LEDGER / 不可变台账</p>
+            <h2>已完成批次</h2>
+          </div>
+          <div class="ledger-actions">
+            <span id="ledgerCount" class="mini-badge quiet">0 批</span>
+            <button id="clearAllButton" class="text-button subtle" type="button">清空演示数据</button>
+          </div>
+        </div>
+        <div id="batchTableWrap" class="batch-table-wrap">
+          <div class="empty-state">暂无已完成批次。完成一个生产批次后，结果将在这里永久封存。</div>
+        </div>
+      </section>
+
+      <footer class="page-footer">
+        <span>V-240 / 三粉批次控制台</span>
+        <span>数据封存后不可编辑 · 本地演示环境</span>
+      </footer>
+    </main>
+
+    <div id="failureModal" class="modal-backdrop" hidden>
+      <section class="failure-modal" role="dialog" aria-modal="true" aria-labelledby="failureTitle">
+        <div class="alarm-stripe"></div>
+        <div class="failure-head">
+          <span class="alarm-icon">!</span>
+          <div>
+            <p class="section-kicker">PROCESS INTERLOCK / 联锁停机</p>
+            <h2 id="failureTitle">设备故障</h2>
+          </div>
+          <button id="failureClose" class="icon-button modal-close" type="button" aria-label="关闭">×</button>
+        </div>
+        <div id="failureDetails" class="failure-details"></div>
+        <div id="recoveryPanel" class="recovery-panel" hidden></div>
+        <div class="failure-actions">
+          <button id="recoverButton" class="button button-alarm" type="button">恢复设备并验证</button>
+          <button id="failureResetButton" class="button button-ghost" type="button">丢弃当前批次并复位</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="compareModal" class="modal-backdrop" hidden>
+      <section class="compare-modal" role="dialog" aria-modal="true" aria-labelledby="compareTitle">
+        <div class="compare-head">
+          <div>
+            <p class="section-kicker">A/B RUN REVIEW / 批次对照</p>
+            <h2 id="compareTitle">两次结果并排比较</h2>
+          </div>
+          <button id="compareClose" class="icon-button modal-close" type="button" aria-label="关闭">×</button>
+        </div>
+        <div id="compareGrid" class="compare-grid"></div>
+        <div id="compareVerdict" class="compare-verdict"></div>
+      </section>
+    </div>
+
+    <div id="scenarioModal" class="modal-backdrop" hidden>
+      <section class="scenario-modal" role="dialog" aria-modal="true" aria-labelledby="scenarioTitle">
+        <div class="compare-head">
+          <div>
+            <p class="section-kicker">ACCEPTANCE GUIDE / 验收路径</p>
+            <h2 id="scenarioTitle">三类场景怎么验</h2>
+          </div>
+          <button id="scenarioClose" class="icon-button modal-close" type="button" aria-label="关闭">×</button>
+        </div>
+        <div class="scenario-guide">
+          <article>
+            <span class="guide-index">01</span>
+            <h3>正常生产</h3>
+            <p>保持转速 82 rpm、混合 42 s、出料阀 44%，完成三批且均匀度 ≥ 85%。</p>
+            <button class="text-button load-scenario" data-scenario="normal" type="button">装载正常参数</button>
+          </article>
+          <article>
+            <span class="guide-index">02</span>
+            <h3>设备故障</h3>
+            <p>注入主电机过热，确认联锁停机并显示设备与触发值；恢复后跑满固定 8 s 验证窗。</p>
+            <button class="text-button load-scenario" data-scenario="fault" type="button">装载故障参数</button>
+          </article>
+          <article>
+            <span class="guide-index">03</span>
+            <h3>参数越限</h3>
+            <p>将转速设为 128 rpm，预检会触发主电机上限联锁，画面显示 128 / 110 rpm。</p>
+            <button class="text-button load-scenario" data-scenario="limit" type="button">装载越限参数</button>
+          </article>
+        </div>
+        <p class="scenario-footnote">故障恢复期间仿真持续计时，结束后核对活动故障、设备残留状态与错误累计。</p>
+      </section>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
