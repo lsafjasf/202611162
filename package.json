@@ -1,0 +1,26 @@
+{
+  "name": "signal-trace",
+  "version": "1.0.0",
+  "description": "Web Audio spectral matching game with live meters and export verification",
+  "main": "app.js",
+  "scripts": {
+    "start": "node serve.mjs",
+    "test": "node tests/verify.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lsafjasf/202611162.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/lsafjasf/202611162/issues"
+  },
+  "homepage": "https://github.com/lsafjasf/202611162#readme",
+  "devDependencies": {
+    "playwright": "^1.65.1",
+    "subset-font": "^2.9.0"
+  }
+}

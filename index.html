@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#081113" />
+    <title>Signal Trace / 声纹配对</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Signal Trace 首页">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span>
+            <strong>SIGNAL TRACE</strong>
+            <small>声纹配对实验</small>
+          </span>
+        </a>
+        <div class="transport" aria-label="音频控制">
+          <span class="live-dot" id="engineDot"></span>
+          <span class="engine-label" id="engineLabel">音频待启动</span>
+          <button class="icon-button" id="pauseButton" type="button" aria-label="暂停所有声音">
+            <span class="transport-icon" id="pauseIcon">Ⅱ</span>
+            <span id="pauseText">暂停</span>
+          </button>
+          <button class="icon-button" id="replayButton" type="button" aria-label="重播当前片段">
+            <span class="transport-icon">↻</span>
+            <span>重播</span>
+          </button>
+          <button class="icon-button" id="resetButton" type="button" aria-label="重置校准参数">
+            <span class="transport-icon">⌁</span>
+            <span>重置参数</span>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow"><span>03</span> 同源组 · <span>06</span> 实时声纹</p>
+            <h1>靠频谱，<em>不靠参数。</em></h1>
+            <p class="lede">
+              三个源片段各有一个经过不同滤波与延迟的变体。试听并观察谱形，将同源声纹连成三组。
+              提交前不会显示任何处理数据。
+            </p>
+          </div>
+          <div class="mission-card" aria-label="当前任务状态">
+            <div class="mission-top">
+              <span>MATCH STATUS</span>
+              <strong id="matchStatus">待配对</strong>
+            </div>
+            <div class="strike-row">
+              <span>机会</span>
+              <div class="strikes" id="strikes" aria-label="剩余机会">
+                <i class="active"></i><i class="active"></i>
+              </div>
+              <b id="strikeText">2 / 2</b>
+            </div>
+            <div class="mission-progress">
+              <span id="connectionCount">0</span>
+              <span>/ 3 组已连接</span>
+              <div class="progress-track"><i id="progressFill"></i></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="workbench panel" aria-labelledby="workbenchTitle">
+          <header class="panel-head">
+            <div>
+              <p class="panel-kicker">SPECTRAL MATCHING</p>
+              <h2 id="workbenchTitle">声纹配对工作台</h2>
+            </div>
+            <div class="legend">
+              <span><i class="legend-source"></i>源片段</span>
+              <span><i class="legend-variant"></i>滤波变体</span>
+              <span class="legend-tip">点击左侧 → 点击右侧</span>
+            </div>
+          </header>
+          <div class="canvas-wrap" id="pairCanvasWrap">
+            <canvas id="pairCanvas" aria-label="六个声纹卡片及配对连线"></canvas>
+            <p class="canvas-hint" id="canvasHint">选择任意一个片段开始试听</p>
+          </div>
+          <footer class="workbench-foot">
+            <button class="text-button" id="clearButton" type="button">清空连线</button>
+            <div class="submit-cluster">
+              <p id="submitHint">完成三组连线后可提交</p>
+              <button class="primary-button" id="submitButton" type="button" disabled>
+                提交配对
+                <span>↗</span>
+              </button>
+            </div>
+          </footer>
+        </section>
+
+        <section class="lab panel" aria-labelledby="labTitle">
+          <header class="panel-head">
+            <div>
+              <p class="panel-kicker">LIVE SYNTH LAB / 独立于谜题</p>
+              <h2 id="labTitle">实时参数校准台</h2>
+            </div>
+            <div class="lab-state" id="labState">
+              <span class="status-pip"></span>
+              <b>已收敛</b>
+              <small>0 ms</small>
+            </div>
+          </header>
+
+          <div class="lab-grid">
+            <div class="controls" aria-label="合成参数">
+              <div class="control-row">
+                <label for="pitchControl">
+                  <span>基频 <small>FREQUENCY</small></span>
+                  <output id="pitchValue">220 Hz</output>
+                </label>
+                <input id="pitchControl" data-param="pitch" type="range" min="110" max="880" step="1" value="220" />
+                <div class="range-scale"><span>110</span><span>495</span><span>880 Hz</span></div>
+              </div>
+
+              <div class="control-row">
+                <label for="panControl">
+                  <span>立体声位置 <small>CHANNEL</small></span>
+                  <output id="panValue">C · 0%</output>
+                </label>
+                <input id="panControl" data-param="pan" type="range" min="-100" max="100" step="1" value="0" />
+                <div class="range-scale"><span>L 100</span><span>C</span><span>R 100</span></div>
+              </div>
+
+              <div class="control-row">
+                <label for="bandControl">
+                  <span>频谱滤波 <small>BAND</small></span>
+                  <output id="bandValue">中频</output>
+                </label>
+                <div class="segmented" id="bandControl" role="group" aria-label="频段">
+                  <button type="button" data-band="low">低频</button>
+                  <button type="button" data-band="mid" class="active">中频</button>
+                  <button type="button" data-band="high">高频</button>
+                </div>
+              </div>
+
+              <div class="control-row">
+                <label for="tempoControl">
+                  <span>脉冲节拍 <small>TEMPO</small></span>
+                  <output id="tempoValue">112 BPM</output>
+                </label>
+                <input id="tempoControl" data-param="tempo" type="range" min="60" max="180" step="1" value="112" />
+                <div class="range-scale"><span>60</span><span>120</span><span>180 BPM</span></div>
+              </div>
+
+              <div class="control-row">
+                <label for="delayControl">
+                  <span>回声延迟 <small>DELAY</small></span>
+                  <output id="delayValue">140 ms</output>
+                </label>
+                <input id="delayControl" data-param="delay" type="range" min="0" max="500" step="5" value="140" />
+                <div class="range-scale"><span>0</span><span>250</span><span>500 ms</span></div>
+              </div>
+
+              <div class="control-row">
+                <label for="peakControl">
+                  <span>输出峰值 <small>PEAK</small></span>
+                  <output id="peakValue">−9 dB</output>
+                </label>
+                <input id="peakControl" data-param="peak" type="range" min="-18" max="-1" step="0.5" value="-9" />
+                <div class="range-scale"><span>−18</span><span>−9.5</span><span>−1 dBFS</span></div>
+              </div>
+
+              <div class="control-actions">
+                <button class="secondary-button" id="saveButton" type="button">保存参数</button>
+                <button class="secondary-button" id="reloadButton" type="button">重新载入</button>
+                <button class="secondary-button sound-button" id="labPlayButton" type="button">
+                  <span>◉</span> 监听校准音
+                </button>
+              </div>
+            </div>
+
+            <div class="monitor" aria-label="实时音频仪表">
+              <div class="monitor-top">
+                <span>LIVE ANALYSIS</span>
+                <span id="monitorClock">48 kHz · FFT 2048</span>
+              </div>
+              <canvas id="labSpectrum" aria-label="实时频谱分析"></canvas>
+              <div class="meters">
+                <article class="meter-card">
+                  <span>频率</span>
+                  <b id="meterPitch">220.0 <small>Hz</small></b>
+                  <div class="mini-track"><i id="pitchNeedle"></i></div>
+                </article>
+                <article class="meter-card">
+                  <span>声道</span>
+                  <b class="channel-readout"><i>L</i><em id="meterLeft">−∞</em><i>R</i><em id="meterRight">−∞</em></b>
+                  <div class="channel-track left-right"><i id="leftBar"></i><i id="rightBar"></i></div>
+                </article>
+                <article class="meter-card">
+                  <span>延迟</span>
+                  <b id="meterDelay">140 <small>ms</small></b>
+                  <div class="mini-track"><i id="delayNeedle"></i></div>
+                </article>
+                <article class="meter-card">
+                  <span>峰值</span>
+                  <b id="meterPeak">−9.0 <small>dBFS</small></b>
+                  <div class="mini-track"><i id="peakNeedle"></i></div>
+                </article>
+              </div>
+              <div class="aux-readouts">
+                <span>频段质心 <b id="meterCentroid">— Hz</b></span>
+                <span>实测节拍 <b id="meterTempo">112 BPM</b></span>
+                <span>快照 <b id="snapshotStatus">未保存</b></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="diagnostics panel" aria-labelledby="diagnosticsTitle">
+          <header class="panel-head">
+            <div>
+              <p class="panel-kicker">RENDER INTEGRITY / OFFLINE AUDIO</p>
+              <h2 id="diagnosticsTitle">导出一致性检查</h2>
+            </div>
+            <div class="export-actions">
+              <button class="secondary-button" id="verifyButton" type="button">载入快照并复验</button>
+              <button class="primary-button compact" id="exportButton" type="button">
+                检查并导出 WAV <span>↓</span>
+              </button>
+            </div>
+          </header>
+          <div class="diagnostic-grid">
+            <div class="integrity">
+              <p class="subhead">预检门禁</p>
+              <div class="check-list">
+                <div class="check-item" id="checkSilence">
+                  <i>○</i><span>静音检测</span><b>等待渲染</b>
+                </div>
+                <div class="check-item" id="checkClipping">
+                  <i>○</i><span>削波检测</span><b>等待渲染</b>
+                </div>
+                <div class="check-item" id="checkChannels">
+                  <i>○</i><span>双声道完整</span><b>等待渲染</b>
+                </div>
+              </div>
+              <p class="check-note" id="exportNote">首次导出会成为 A 样本；重新载入参数后再次导出，将自动进行 A/B 对比。</p>
+            </div>
+            <div class="comparison">
+              <p class="subhead">A / B 样本一致性</p>
+              <div class="compare-head">
+                <span>指标</span><span>A 样本</span><span>B 样本</span><span>结果</span>
+              </div>
+              <div class="compare-row" id="compareDuration">
+                <span>导出时长</span><b>—</b><b>—</b><em>待测</em>
+              </div>
+              <div class="compare-row" id="comparePeak">
+                <span>关键峰值</span><b>—</b><b>—</b><em>待测</em>
+              </div>
+              <div class="compare-row" id="comparePitch">
+                <span>关键音高</span><b>—</b><b>—</b><em>待测</em>
+              </div>
+              <div class="compare-row" id="compareDelay">
+                <span>延迟读数</span><b>—</b><b>—</b><em>待测</em>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-foot">
+        <span>ALL SIGNALS SYNTHESIZED IN REAL TIME</span>
+        <span>Web Audio API · Canvas 2D · 16-bit PCM</span>
+      </footer>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>
