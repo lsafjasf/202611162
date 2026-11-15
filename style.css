@@ -1,0 +1,79 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #10151d; color: #dfe6ee; min-height: 100vh;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px; background: #18202c; border-bottom: 1px solid #2a3648;
+}
+header h1 { font-size: 18px; }
+#run-status { font-size: 14px; color: #8fd3ff; }
+main { display: flex; gap: 12px; padding: 12px; align-items: flex-start; }
+#left { flex: 0 0 660px; }
+#right { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 380px; }
+canvas { background: #0b0f16; border: 1px solid #2a3648; border-radius: 8px; width: 640px; height: 480px; }
+#gauges { display: flex; gap: 8px; margin-top: 8px; }
+.gauge {
+  flex: 1; background: #18202c; border: 1px solid #2a3648; border-radius: 6px;
+  padding: 6px 8px; font-size: 12px; display: flex; flex-direction: column; gap: 2px;
+}
+.gauge span { color: #8a97a8; }
+.gauge b { font-size: 15px; color: #8fd3ff; }
+#failure-banner {
+  margin-top: 8px; padding: 10px 12px; border-radius: 6px;
+  background: #4a1520; border: 1px solid #ff5468; color: #ffb3bc;
+  font-size: 14px; line-height: 1.5; white-space: pre-line;
+}
+.panel { background: #18202c; border: 1px solid #2a3648; border-radius: 8px; padding: 10px 12px; }
+.panel h2 { font-size: 14px; margin-bottom: 8px; color: #aebdd0; }
+.panel label { display: block; font-size: 13px; margin: 6px 0; }
+.panel input[type=range] { width: 100%; }
+.panel output { color: #8fd3ff; }
+#batch-tabs { display: flex; gap: 6px; margin-bottom: 6px; }
+#batch-tabs button {
+  flex: 1; padding: 5px 4px; font-size: 12px; background: #222d3d; color: #c6d2e0;
+  border: 1px solid #2a3648; border-radius: 5px; cursor: pointer;
+}
+#batch-tabs button.active { background: #2d5f8a; color: #fff; }
+#batch-tabs button.done { border-color: #3f9d63; }
+#batch-tabs button.failed { border-color: #ff5468; }
+#batch-tabs button.locked { opacity: 0.55; cursor: not-allowed; }
+#batch-hint { font-size: 12px; color: #8a97a8; margin: 4px 0 8px; line-height: 1.5; }
+.btn-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+button {
+  background: #2d5f8a; color: #fff; border: none; border-radius: 5px;
+  padding: 6px 12px; font-size: 13px; cursor: pointer;
+}
+button:disabled { background: #2a3648; color: #6b7889; cursor: not-allowed; }
+button.hidden, .hidden { display: none !important; }
+.speed { font-size: 12px; color: #8a97a8; display: flex; gap: 4px; align-items: center; }
+#device-list { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.dev {
+  font-size: 12px; padding: 4px 8px; border-radius: 4px;
+  background: #222d3d; border: 1px solid #2a3648;
+}
+.dev.on { border-color: #3f9d63; color: #9fe8bb; }
+.dev.fault { border-color: #ff5468; color: #ffb3bc; animation: blink 0.8s infinite; }
+@keyframes blink { 50% { opacity: 0.45; } }
+#event-log {
+  height: 120px; overflow-y: auto; font-size: 11px; font-family: monospace;
+  background: #0b0f16; border-radius: 4px; padding: 6px; line-height: 1.6; color: #9fb0c4;
+}
+#event-log .fault { color: #ff8a96; }
+#event-log .ok { color: #9fe8bb; }
+#result-table, .cmp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#result-table th, #result-table td, .cmp-table th, .cmp-table td {
+  border: 1px solid #2a3648; padding: 4px 6px; text-align: center;
+}
+#result-table th, .cmp-table th { background: #222d3d; color: #aebdd0; }
+#snapshot-info { font-size: 12px; color: #8a97a8; margin: 6px 0; }
+#compare { display: flex; gap: 8px; margin-top: 6px; }
+#compare .cmp-col { flex: 1; }
+#compare .cmp-col h3 { font-size: 12px; color: #8fd3ff; margin-bottom: 4px; }
+#compare .cmp-col .exc { font-size: 11px; color: #ffb3bc; margin-top: 4px; line-height: 1.5; }
+#scenario-report { font-size: 12px; margin-top: 8px; line-height: 1.7; white-space: pre-line;
+  max-height: 220px; overflow-y: auto; }
+#scenario-report .pass { color: #9fe8bb; }
+#scenario-report .fail { color: #ff8a96; }
+@media (max-width: 1100px) { main { flex-direction: column; } #left { flex: none; } }

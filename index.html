@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冷冻干燥仓模拟器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>冷冻干燥仓模拟器</h1>
+  <div id="run-status">待开始</div>
+</header>
+<main>
+  <section id="left">
+    <canvas id="chamber" width="640" height="480"></canvas>
+    <div id="gauges">
+      <div class="gauge"><span>产品温度</span><b id="g-temp">--</b></div>
+      <div class="gauge"><span>腔体压力</span><b id="g-press">--</b></div>
+      <div class="gauge"><span>含水率</span><b id="g-moist">--</b></div>
+      <div class="gauge"><span>霜层</span><b id="g-frost">--</b></div>
+      <div class="gauge"><span>功率</span><b id="g-power">--</b></div>
+    </div>
+    <div id="failure-banner" class="hidden"></div>
+  </section>
+  <section id="right">
+    <div class="panel" id="batch-panel">
+      <h2>批次参数 <span id="batch-label"></span></h2>
+      <div id="batch-tabs"></div>
+      <label>预冻温度 <output id="o-prefreeze">-45</output> ℃
+        <input type="range" id="p-prefreeze" min="-60" max="-15" step="1" value="-45">
+      </label>
+      <label>真空度目标 <output id="o-vacuum">30</output> Pa
+        <input type="range" id="p-vacuum" min="5" max="200" step="5" value="30">
+      </label>
+      <label>加热斜率 <output id="o-ramp">0.5</output> ℃/min
+        <input type="range" id="p-ramp" min="0.1" max="2.0" step="0.1" value="0.5">
+      </label>
+      <div id="batch-hint"></div>
+      <div class="btn-row">
+        <button id="btn-start">▶ 开始批次</button>
+        <button id="btn-pause" disabled>⏸ 暂停检查</button>
+        <button id="btn-reset" disabled>↺ 重置本批</button>
+        <button id="btn-defrost" disabled>🧊 化霜</button>
+      </div>
+      <div class="btn-row">
+        <button id="btn-repair" class="hidden">🔧 维修设备</button>
+        <label class="speed">速度
+          <select id="speed">
+            <option value="1">1×</option>
+            <option value="8" selected>8×</option>
+            <option value="32">32×</option>
+          </select>
+        </label>
+        <label class="speed"><input type="checkbox" id="mute"> 静音</label>
+      </div>
+    </div>
+    <div class="panel" id="device-panel">
+      <h2>设备状态 / 启停记录</h2>
+      <div id="device-list"></div>
+      <div id="event-log"></div>
+    </div>
+    <div class="panel" id="result-panel">
+      <h2>批次结果</h2>
+      <table id="result-table">
+        <thead><tr><th>批次</th><th>良品</th><th>废品</th><th>峰值功耗</th><th>停机原因</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="panel" id="snapshot-panel">
+      <h2>快照 / 对比重跑</h2>
+      <div class="btn-row">
+        <button id="btn-snapshot">📷 保存快照</button>
+        <button id="btn-rerun" disabled>🔁 从快照重跑</button>
+      </div>
+      <div id="snapshot-info">尚未保存快照</div>
+      <div id="compare"></div>
+    </div>
+    <div class="panel" id="scenario-panel">
+      <h2>场景验证</h2>
+      <div class="btn-row">
+        <button data-scn="normal">✅ 正常生产</button>
+        <button data-scn="fault">💥 设备故障</button>
+        <button data-scn="limit">⚠️ 参数越限</button>
+      </div>
+      <div id="scenario-report"></div>
+    </div>
+  </section>
+</main>
+<script src="sim.js"></script>
+<script src="scenarios.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
