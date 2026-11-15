@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>线缆挤出机模拟训练系统</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+         background: #0b0d0f; color: #d6dce3; }
+  header { padding: 12px 20px; background: #161a1e; border-bottom: 1px solid #262b31; }
+  header h1 { margin: 0; font-size: 18px; }
+  header p { margin: 4px 0 0; font-size: 12px; color: #8a929c; }
+  .layout { display: grid; grid-template-columns: 1fr 340px; gap: 14px; padding: 14px; }
+  .card { background: #161a1e; border: 1px solid #262b31; border-radius: 10px; padding: 14px; }
+  .card h2 { margin: 0 0 10px; font-size: 14px; color: #9fb4cc; }
+  #stage { width: 100%; height: 380px; border-radius: 8px; background: #101315; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .kv { display: flex; justify-content: space-between; font-size: 13px;
+        padding: 4px 0; border-bottom: 1px dashed #262b31; }
+  .kv b { color: #8ce99a; font-weight: 600; }
+  .row { margin: 10px 0; }
+  .row label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  input[type=range] { width: 100%; }
+  button { background: #23303d; color: #d6dce3; border: 1px solid #334455;
+           border-radius: 6px; padding: 7px 10px; margin: 3px 4px 3px 0;
+           font-size: 13px; cursor: pointer; }
+  button:hover { background: #2d3f50; }
+  button.danger { background: #4a2326; border-color: #7a3538; }
+  button.warn { background: #4a3a1e; border-color: #7a5f2e; }
+  button.ok { background: #1f3d2b; border-color: #2f6b47; }
+  .progress { height: 8px; background: #262b31; border-radius: 4px; overflow: hidden; }
+  .progress i { display: block; height: 100%; background: #2f81f7; width: 0;
+                transition: width .15s linear; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { padding: 5px 6px; border-bottom: 1px solid #262b31; text-align: left; }
+  th { color: #8a929c; font-weight: 500; }
+  .alarm { display: none; background: #3a1d20; border: 1px solid #e5484d;
+           border-radius: 8px; padding: 12px; margin-top: 12px; }
+  .alarm h3 { margin: 0 0 8px; color: #ff888b; }
+  .alarm .big { font-size: 20px; color: #ffb0b3; margin: 6px 0; }
+  .finish { display: none; background: #1d2f24; border: 1px solid #30a46c;
+            border-radius: 8px; padding: 12px; margin-top: 12px; font-size: 13px; }
+  .finish h3 { margin: 0 0 8px; }
+  .mini { font-size: 12px; color: #8a929c; }
+  input[type=number], select { width: 100%; background: #0f1317; color: #d6dce3;
+    border: 1px solid #334455; border-radius: 5px; padding: 6px; }
+  .cmp { display: none; margin-top: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>线缆挤出机模拟训练系统</h1>
+  <p>调节螺杆速度 / 模头温度 / 收线张力，完成三种规格线缆并通过末端质量检查。换规格前必须清料。</p>
+</header>
+<div class="layout">
+  <div>
+    <div class="card">
+      <canvas id="stage" width="900" height="380"></canvas>
+      <div id="alarmBox" class="alarm">
+        <h3 id="alarmKind">报警</h3>
+        <div>具体设备：<b id="alarmDevice"></b>（<span id="alarmCode"></span>）</div>
+        <div class="big">触发值 <span id="alarmValue"></span> ｜ 阈值 <span id="alarmThreshold"></span></div>
+        <div id="alarmMsg" class="mini"></div>
+        <button class="ok" id="btnAck">确认报警并进入 10s 恢复观察期</button>
+      </div>
+      <div id="finishBox" class="finish">
+        <h3 id="finishTitle"></h3>
+        <div id="finishBody"></div>
+        <button class="ok" id="btnNewBatch">开始新批次（已完成批次冻结保留）</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>设备启停与事件日志（含每个关键设备启停时刻）</h2>
+      <table><thead><tr><th>模拟时刻</th><th>设备</th><th>动作</th><th>详情</th></tr></thead>
+      <tbody id="eventLog"></tbody></table>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <h2>运行控制</h2>
+      <div class="kv"><span>状态</span><b id="stateText"></b></div>
+      <div class="kv"><span>当前规格</span><b id="specText"></b></div>
+      <div class="kv"><span>本段进度</span><b id="progText"></b></div>
+      <div class="progress" style="margin:6px 0"><i id="progBar"></i></div>
+      <div class="kv"><span>熔体温度</span><b id="meltText"></b></div>
+      <div class="kv"><span>实时线径</span><b id="diaText"></b></div>
+      <div class="kv"><span>当前/峰值功耗</span><b><span id="powerText"></span> / <span id="peakText"></span></b></div>
+      <div class="kv"><span>良品 / 废品</span><b><span id="goodText"></span> / <span id="wasteText"></span></b></div>
+      <div class="kv"><span>当前缺陷</span><b id="defectText"></b></div>
+      <div class="kv"><span>运行时间</span><b id="timeText"></b></div>
+      <div class="kv"><span>恢复观察</span><b id="recoveryText"></b></div>
+      <button class="ok" id="btnStart">▶ 启动生产</button>
+      <button class="warn" id="btnPurge">🧹 换规格清料(5s)</button>
+      <button id="btnPause">⏸ 暂停检查</button>
+      <button class="danger" id="btnReset">↺ 重置当前批次</button>
+      <button id="btnMute">🔊 声音</button>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>工艺参数（越硬件限将报警并钳制）</h2>
+      <div class="row">
+        <label>螺杆速度 <b><span id="screwVal">45</span> rpm（0–100）</b></label>
+        <input type="range" id="screw" min="0" max="100" value="45">
+      </div>
+      <div class="row">
+        <label>模头温度设定 <b><span id="tempSetVal">180</span> °C（20–260）</b></label>
+        <input type="range" id="tempSet" min="20" max="260" value="180">
+      </div>
+      <div class="row">
+        <label>收线张力 <b><span id="tensionVal">18</span> N（0–40）</b></label>
+        <input type="range" id="tension" min="0" max="40" value="18">
+      </div>
+      <p class="mini">工艺窗口：熔体 150–210°C（过低表面粗糙）、张力 8–28N、线径偏差 ±8%。</p>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>设备故障注入（演示故障场景）</h2>
+      <button class="danger" id="faultHeater">加热器烧毁</button>
+      <button class="danger" id="faultScrew">螺杆过流 128A</button>
+      <button class="danger" id="faultWinder">收线轴卡滞 42N</button>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>快照与改参重跑</h2>
+      <button id="btnSnapshot">📸 保存当前参数快照</button>
+      <div class="row"><select id="snapshotSel"></select></div>
+      <div class="row"><label>重跑覆盖：螺杆</label><input type="number" id="reScrew" value="60"></div>
+      <div class="row"><label>重跑覆盖：温度设定</label><input type="number" id="reTemp" value="180"></div>
+      <div class="row"><label>重跑覆盖：张力</label><input type="number" id="reTension" value="18"></div>
+      <button class="ok" id="btnRerun">用快照 + 新参数重跑</button>
+    </div>
+  </div>
+</div>
+<div class="layout" style="grid-template-columns:1fr">
+  <div class="card">
+    <h2>已完成批次（数据冻结，不可修改）与并排比较</h2>
+    <table>
+      <thead><tr><th>批次</th><th>良品(m)</th><th>废品(m)</th><th>良率</th>
+        <th>峰值功耗(W)</th><th>停机原因</th><th>异常数</th><th>QC</th></tr></thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+    <div class="row" style="margin-top:10px">
+      批次 A <select id="cmpA" style="display:inline-block;width:auto"></select>
+      批次 B <select id="cmpB" style="display:inline-block;width:auto"></select>
+      <button id="btnCompare">并排比较</button>
+    </div>
+    <div id="cmpResult" class="cmp">
+      <table id="cmpBody"></table>
+    </div>
+  </div>
+</div>
+<script src="src/simulation.js"></script>
+<script src="src/renderer.js"></script>
+<script src="src/sound.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>

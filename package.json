@@ -1,0 +1,10 @@
+{
+  "name": "cable-extruder-sim",
+  "version": "1.0.0",
+  "description": "线缆挤出机模拟训练系统：参数调节、故障/越限处理、快照重跑与批次对比",
+  "private": true,
+  "scripts": {
+    "test": "node tests/run-tests.js && node tests/dom-smoke.js",
+    "serve": "node -e \"const http=require('http'),fs=require('fs'),p=require('path');const t={'.html':'text/html','.js':'text/javascript'};http.createServer((q,r)=>{const f=p.join(process.cwd(),q.url==='/'?'index.html':q.url);fs.readFile(f,(e,d)=>{if(e){r.statusCode=404;r.end('404');return}r.setHeader('Content-Type',t[p.extname(f)]||'text/plain');r.end(d)})}).listen(8091,()=>console.log('http://localhost:8091'))\""
+  }
+}
