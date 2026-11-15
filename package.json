@@ -1,0 +1,10 @@
+{
+  "name": "lamina-stacking-console",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive battery stacking line simulator",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check js/app.js && node --check js/renderer.js && node --check js/audio.js && node --check server.mjs"
+  }
+}
