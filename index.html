@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>浅水沼泽采样艇 · 固定种子任务</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>浅水沼泽采样艇</h1>
+    <div class="seed-box">
+      <label>固定种子
+        <input id="seed-input" type="text" value="MARSH-SEED-2026" maxlength="40">
+      </label>
+      <button id="btn-new-seed" class="btn">按种子重开 (N)</button>
+      <button id="btn-verify" class="btn">校验新局布局</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stage">
+      <div class="hud">
+        <div class="hud-item">
+          <span>燃料</span>
+          <div class="bar"><div id="fuel-fill" class="bar-fill ok"></div></div>
+          <b id="fuel-text">--</b>
+        </div>
+        <div class="hud-item">
+          <span>泥样</span><b id="samples-text">0 / 3</b>
+        </div>
+        <div class="hud-item">
+          <span>用时</span><b id="time-text">--</b>
+        </div>
+        <div class="hud-item">
+          <span>潮位</span>
+          <div class="bar tide"><div id="tide-fill" class="bar-fill"></div></div>
+          <b id="tide-text">--</b>
+        </div>
+        <div class="hud-item meta">
+          <span>种子 <b id="seed-text"></b></span>
+          <span>布局哈希 <b id="hash-text"></b></span>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="game"></canvas>
+        <div id="overlay" class="overlay">
+          <div class="overlay-card">
+            <h2 id="overlay-title">任务结束</h2>
+            <div id="overlay-body"></div>
+            <div class="overlay-actions">
+              <button id="btn-overlay-restart" class="btn primary">同种子重开</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="dpad">
+          <button id="btn-up" class="btn pad">▲ 前进 W</button>
+          <div class="dpad-row">
+            <button id="btn-left" class="btn pad">◀ A</button>
+            <button id="btn-down" class="btn pad">▼ S</button>
+            <button id="btn-right" class="btn pad">D ▶</button>
+          </div>
+          <button id="btn-action" class="btn pad wide">空格：采样 / 清水草</button>
+        </div>
+        <div class="actions">
+          <button id="btn-pause" class="btn">暂停 (P)</button>
+          <button id="btn-recover" class="btn warn">检查点恢复 (R)</button>
+          <button id="btn-restart" class="btn">重开本局</button>
+          <button id="btn-mute" class="btn">静音</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <h3>任务说明</h3>
+      <ul class="help">
+        <li>目标：采集 3 个泥样并返回码头，全程 240 秒。</li>
+        <li>泥滩与浅水会搁浅触底，按 <b>R</b> 从最近检查点恢复（扣 10 燃料，不刷新页面）。</li>
+        <li>水草会缠绕推进器，按住 <b>空格</b> 清除；采样站附近按住空格 2 秒采泥。</li>
+        <li>芦苇降低船速；退潮后潮汐航道变窄变浅。</li>
+        <li>燃料耗尽或超时未返航即失败，摘要会记录失败原因。</li>
+      </ul>
+      <h3>事件日志（输入可见反馈）</h3>
+      <div id="event-log" class="event-log"></div>
+    </aside>
+  </main>
+
+  <script src="js/rng.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('btn-overlay-restart').addEventListener('click', function () {
+      document.getElementById('btn-restart').click();
+      document.getElementById('overlay').style.display = 'none';
+    });
+  </script>
+</body>
+</html>
