@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07141b">
+  <title>冻线之外 · 极地管线守护</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='27' fill='%2307141b' stroke='%2374dfd0'/%3E%3Cpath d='M32 12v40M17 20l30 24M47 20L17 44' stroke='%2374dfd0' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <div>
+          <p class="eyebrow">POLAR GROUND CONTROL</p>
+          <h1>冻线之外 <span>/ 极地管线守护</span></h1>
+        </div>
+      </div>
+
+      <div class="mission-clock" aria-label="任务时间">
+        <div class="clock-copy">
+          <span id="weatherTag" class="weather-tag">晴冷</span>
+          <span id="clockLabel" class="mono">D00 · 00:00</span>
+        </div>
+        <div class="clock-track">
+          <span id="dayProgress" class="clock-fill"></span>
+          <i id="dayMarker" class="clock-marker"></i>
+        </div>
+        <div class="clock-scale"><span>起冻</span><span>融沉窗口</span><span>D90</span></div>
+      </div>
+
+      <div class="header-actions">
+        <button id="pauseBtn" class="control-btn primary" type="button" title="暂停 / 继续（空格）">
+          <span id="pauseIcon" class="icon-pause" aria-hidden="true"></span>
+          <span id="pauseLabel">暂停</span>
+        </button>
+        <button id="speedBtn" class="control-btn compact mono" type="button" title="模拟速度">4×</button>
+        <button id="sequenceBtn" class="control-btn" type="button" title="以同 seed 复现固定操作序列">
+          <span class="icon-sequence" aria-hidden="true"></span>
+          基准复现
+        </button>
+        <button id="restartBtn" class="control-btn icon-only" type="button" title="同 seed 重开" aria-label="同 seed 重开">
+          <span class="icon-restart" aria-hidden="true"></span>
+        </button>
+        <button id="soundBtn" class="control-btn icon-only" type="button" title="环境声音" aria-label="环境声音">
+          <span id="soundIcon" class="icon-sound" aria-hidden="true"></span>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="sidebar left-sidebar">
+        <section class="panel site-panel">
+          <div class="panel-kicker">
+            <span>现场 / SITE</span>
+            <span class="live-dot">LIVE</span>
+          </div>
+          <div class="site-title-row">
+            <div>
+              <p id="siteCode" class="site-code mono">ARC-677</p>
+              <p id="siteCoords" class="muted small">78.14°N · 18.52°E</p>
+            </div>
+            <div class="seed-box">
+              <label for="seedInput">SEED</label>
+              <div><input id="seedInput" class="mono" value="677" inputmode="numeric" maxlength="8"><button id="loadSeedBtn" type="button" title="载入 seed">↗</button></div>
+            </div>
+          </div>
+          <div class="sentinel-row">
+            <span class="sentinel-glyph" aria-hidden="true">⌁</span>
+            <div><span>目标个体</span><strong id="sentinelId">ARV-07 · 雪鸮</strong></div>
+            <span id="sentinelHealth" class="sentinel-health mono">86%</span>
+          </div>
+          <div class="fingerprint-row">
+            <span>序列指纹</span>
+            <code id="fingerprint">FP-00000000</code>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div><span class="section-index">01</span><h2>环境指标</h2></div>
+            <span id="overallStatus" class="status-pill steady">稳态</span>
+          </div>
+          <div class="metric-list">
+            <div class="metric" data-metric="station">
+              <div class="metric-line"><span>站点地基温度</span><strong id="stationTemp">-5.2<small>°C</small></strong></div>
+              <div class="metric-track"><i id="stationBar"></i><b class="safe-notch"></b></div>
+              <div class="metric-range"><span>安全 −8.0 ~ −1.5</span><span id="stationTrend">稳定</span></div>
+            </div>
+            <div class="metric" data-metric="pipe">
+              <div class="metric-line"><span>管线位移</span><strong id="pipeDisplacement">2.1<small>mm</small></strong></div>
+              <div class="metric-track danger-track"><i id="pipeBar"></i><b class="warning-notch"></b></div>
+              <div class="metric-range"><span>警戒 16 · 安全 ≤ 18 mm</span><span id="pipeTrend">稳定</span></div>
+            </div>
+            <div class="metric" data-metric="thaw">
+              <div class="metric-line"><span>活动层融深</span><strong id="thawDepth">1.38<small>m</small></strong></div>
+              <div class="metric-track"><i id="thawBar"></i></div>
+              <div class="metric-range"><span>警戒 2.25 m</span><span id="thawTrend">冻结线清晰</span></div>
+            </div>
+            <div class="metric" data-metric="heat">
+              <div class="metric-line"><span>局部热流</span><strong id="heatFlux">18.2<small>W/m²</small></strong></div>
+              <div class="metric-track warm-track"><i id="heatBar"></i></div>
+              <div class="metric-range"><span>管重 <span id="pipeLoad">62</span> t / 段</span><span id="heatTrend">基线</span></div>
+            </div>
+            <div class="metric" data-metric="drainage">
+              <div class="metric-line"><span>排水效能</span><strong id="drainage">82<small>%</small></strong></div>
+              <div class="metric-track"><i id="drainageBar"></i></div>
+              <div class="metric-range"><span>警戒 &lt; 35%</span><span id="drainageTrend">通畅</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel resource-panel">
+          <div class="panel-heading">
+            <div><span class="section-index">02</span><h2>可用资源</h2></div>
+            <span class="muted mono" id="initialResourceNote">初始 P214 · C38</span>
+          </div>
+          <div class="resource-strip">
+            <div class="resource"><span class="resource-icon power">ϟ</span><div><strong id="powerValue">--</strong><span>kWh 电力</span></div></div>
+            <div class="resource"><span class="resource-icon crew">◷</span><div><strong id="crewValue">--</strong><span>h 工时</span></div></div>
+            <div class="resource"><span class="resource-icon probe">⌖</span><div><strong id="probeValue">--</strong><span>支探针</span></div></div>
+          </div>
+          <div class="eco-line">
+            <div><span>生态完整性</span><strong id="ecologyValue">93.0</strong></div>
+            <div class="eco-meter"><i id="ecologyBar"></i></div>
+            <span id="ecoLabel" class="eco-label">健康</span>
+          </div>
+        </section>
+
+        <section class="panel sequence-panel">
+          <div class="panel-heading slim">
+            <div><span class="section-index">03</span><h2>确定性校验</h2></div>
+            <button id="verifyBtn" class="text-btn" type="button">查看校核 ↗</button>
+          </div>
+          <div class="verify-grid">
+            <div><span>目标个体</span><b class="mono" id="verifySentinel">一致</b></div>
+            <div><span>天气序列</span><b class="mono" id="verifyWeather">锁定</b></div>
+            <div><span>初始资源</span><b class="mono" id="verifyResources">一致</b></div>
+          </div>
+          <p class="verify-note">重开默认沿用当前 seed；任务点位、关键事件与天气均由同一序列派生。</p>
+        </section>
+      </aside>
+
+      <section class="center-stage">
+        <div class="scene-wrap">
+          <canvas id="scene" aria-label="极地冻土剖面、管线与热区模拟"></canvas>
+          <div class="scene-topbar">
+            <div id="weatherChip" class="scene-chip">
+              <span class="chip-orbit" aria-hidden="true"></span>
+              <div><span id="sceneWeather">晴冷 · −22°C</span><small id="sceneWind">西北风 4.2 m/s · 日照 0%</small></div>
+            </div>
+            <div class="scene-legend">
+              <span><i class="legend-heat"></i>热区</span>
+              <span><i class="legend-cold"></i>冷媒</span>
+              <span><i class="legend-water"></i>排水</span>
+            </div>
+          </div>
+          <div id="toolPrompt" class="tool-prompt">
+            <span class="prompt-crosshair" aria-hidden="true"></span>
+            <span>选择左侧干预工具，再点击场景执行</span>
+          </div>
+          <div class="scene-readout">
+            <div><span>融沉速率</span><strong id="settleRate">0.00 <small>mm/d</small></strong></div>
+            <div><span>热流异常</span><strong id="heatAnomaly">+0.0 <small>σ</small></strong></div>
+            <div><span>监测覆盖</span><strong id="coverageValue">0 <small>%</small></strong></div>
+          </div>
+          <div class="corner-index mono">SECTION A—A′ / 1:200</div>
+        </div>
+
+        <section class="timeline-panel panel">
+          <div class="timeline-head">
+            <div>
+              <span class="section-index">04</span>
+              <h2>九十天热力轨迹</h2>
+              <span id="timelineStatus" class="timeline-status">运行中 · 无越限</span>
+            </div>
+            <div class="timeline-tools">
+              <span class="chart-key"><i class="key-temp"></i>地温</span>
+              <span class="chart-key"><i class="key-pipe"></i>位移</span>
+              <span class="chart-key"><i class="key-event"></i>关键事件</span>
+            </div>
+          </div>
+          <canvas id="timeline" aria-label="90 天温度、位移和关键事件时间轴"></canvas>
+        </section>
+      </section>
+
+      <aside class="sidebar right-sidebar">
+        <section class="panel actions-panel">
+          <div class="panel-heading">
+            <div><span class="section-index">05</span><h2>干预工具</h2></div>
+            <span class="muted mono">1—3</span>
+          </div>
+          <div class="action-list">
+            <button class="action-card" data-action="probe" type="button">
+              <span class="action-key mono">1</span>
+              <span class="action-icon probe-icon" aria-hidden="true"></span>
+              <span class="action-copy"><strong>布设温度探针</strong><small>识别热异常 · 4 kWh / 2 h / 1 支</small></span>
+              <span class="action-arrow">↗</span>
+            </button>
+            <button class="action-card" data-action="cooling" type="button">
+              <span class="action-key mono">2</span>
+              <span class="action-icon cooling-icon" aria-hidden="true"></span>
+              <span class="action-copy"><strong>调节地基冷却</strong><small>加强冷媒回路 · 24 kWh / 1.5 h</small></span>
+              <span class="action-arrow">↗</span>
+            </button>
+            <button class="action-card" data-action="drainage" type="button">
+              <span class="action-key mono">3</span>
+              <span class="action-icon drain-icon" aria-hidden="true"></span>
+              <span class="action-copy"><strong>维护排水沟</strong><small>恢复排水能力 · 9 kWh / 2.5 h</small></span>
+              <span class="action-arrow">↗</span>
+            </button>
+          </div>
+          <p id="actionGuide" class="action-guide">探针落点越接近虚线推荐点，监测覆盖提升越多。</p>
+        </section>
+
+        <section id="lastResultPanel" class="panel result-panel empty">
+          <div class="panel-heading">
+            <div><span class="section-index">06</span><h2>最近一次操作</h2></div>
+            <span id="resultStamp" class="mono muted">等待</span>
+          </div>
+          <div class="result-body">
+            <div class="result-headline"><span id="resultIcon" class="result-icon">·</span><strong id="resultTitle">尚无操作记录</strong></div>
+            <p id="resultDetail">布设探针、启动冷却或清理排水沟后，这里会记录结果与资源变化。</p>
+            <div class="result-deltas">
+              <div><span>作业</span><b id="deltaTime">—</b></div>
+              <div><span>电力</span><b id="deltaPower">—</b></div>
+              <div><span>生态</span><b id="deltaEco">—</b></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel recovery-panel">
+          <div class="panel-heading">
+            <div><span class="section-index">07</span><h2>恢复策略</h2></div>
+            <button id="rerunBtn" class="text-btn" type="button">重新推演 ↻</button>
+          </div>
+          <div id="strategyComparison" class="strategy-list">
+            <div class="strategy skeleton"></div>
+            <div class="strategy skeleton"></div>
+          </div>
+          <p class="strategy-note">成本来自同一临界状态的确定性推演；快速处置代价更高，但恢复更快。</p>
+        </section>
+
+        <section class="panel log-panel">
+          <div class="panel-heading">
+            <div><span class="section-index">08</span><h2>事件记录</h2></div>
+            <span id="eventCount" class="event-count mono">01</span>
+          </div>
+          <div id="eventLog" class="event-log" aria-live="polite"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <div id="modalBackdrop" class="modal-backdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button id="modalClose" class="modal-close" type="button" aria-label="关闭">×</button>
+      <p class="modal-kicker" id="modalKicker">MISSION CONTROL</p>
+      <h2 id="modalTitle">情景校核</h2>
+      <p id="modalIntro" class="modal-intro"></p>
+      <div id="modalContent" class="modal-content"></div>
+      <div id="modalActions" class="modal-actions"></div>
+    </section>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
