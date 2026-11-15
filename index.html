@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b0e12" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0e12'/%3E%3Cpath d='M8 18v-4m4 8V10m4 14V8m4 10v-4m4 6v-8' stroke='%235dd8e6' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <title>Phase Lab — 十秒降噪工作台</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div>
+            <p class="eyebrow">PHASE LAB / 10S SIGNAL WORKSHOP</p>
+            <h1>十秒降噪工作台</h1>
+          </div>
+        </div>
+        <div class="engine-readout">
+          <span class="status-lamp" id="engineLamp"></span>
+          <div>
+            <span class="readout-label">AUDIO ENGINE</span>
+            <strong id="engineStatus">待机 · 点击试听启动</strong>
+          </div>
+        </div>
+        <div class="system-readout">
+          <span class="readout-label">RATE / CHANNEL</span>
+          <strong id="systemFormat">48 kHz · STEREO</strong>
+        </div>
+      </header>
+
+      <section class="transport-bar" aria-label="播放控制">
+        <div class="transport-controls">
+          <button class="button button-primary" id="playButton" type="button">
+            <span class="button-icon" aria-hidden="true">&gt;</span>
+            <span id="playLabel">开始试听</span>
+          </button>
+          <button class="button" id="replayButton" type="button">
+            <span class="button-icon" aria-hidden="true">R</span> 重播
+          </button>
+          <button class="button" id="resetButton" type="button">
+            <span class="button-icon" aria-hidden="true">RST</span> 参数重置
+          </button>
+        </div>
+        <div class="transport-position">
+          <span class="eyebrow">TIMELINE</span>
+          <output id="timeReadout">00:00.000 / 00:10.000</output>
+          <div class="mini-timeline" aria-hidden="true"><i id="timelineFill"></i></div>
+        </div>
+        <div class="transport-note">
+          <span class="live-dot"></span>
+          <span id="syncStatus">音频图就绪 · 等待声学分析</span>
+        </div>
+      </section>
+
+      <main>
+        <section class="metric-grid" aria-label="关键读数">
+          <article class="metric-card">
+            <span class="metric-index">01</span>
+            <div>
+              <span class="metric-label">关键音高</span>
+              <strong id="pitchValue">—</strong>
+              <small id="pitchDetail">峰值基频</small>
+            </div>
+          </article>
+          <article class="metric-card">
+            <span class="metric-index">02</span>
+            <div>
+              <span class="metric-label">声道</span>
+              <strong id="channelValue">L — / R —</strong>
+              <small id="channelDetail">左右 RMS</small>
+            </div>
+          </article>
+          <article class="metric-card">
+            <span class="metric-index">03</span>
+            <div>
+              <span class="metric-label">链路延迟</span>
+              <strong id="delayValue">0.0 ms</strong>
+              <small id="delayDetail">门限预读</small>
+            </div>
+          </article>
+          <article class="metric-card metric-card-peak">
+            <span class="metric-index">04</span>
+            <div>
+              <span class="metric-label">峰值</span>
+              <strong id="peakValue">— dBFS</strong>
+              <small id="peakDetail">输入 → 输出</small>
+            </div>
+            <div class="peak-meter" aria-hidden="true">
+              <i id="peakMeterFill"></i><b id="peakMeterHot"></b>
+            </div>
+          </article>
+          <article class="metric-card">
+            <span class="metric-index">05</span>
+            <div>
+              <span class="metric-label">时长</span>
+              <strong id="durationValue">10.000 s</strong>
+              <small id="durationDetail">源 / 导出</small>
+            </div>
+          </article>
+          <article class="metric-card">
+            <span class="metric-index">06</span>
+            <div>
+              <span class="metric-label">收敛窗口</span>
+              <strong id="convergenceValue">— ms</strong>
+              <small id="convergenceDetail">声音与仪表</small>
+            </div>
+          </article>
+        </section>
+
+        <div class="workspace">
+          <div class="visual-column">
+            <section class="panel spectrum-panel">
+              <header class="panel-heading">
+                <div>
+                  <span class="eyebrow">SPECTRUM COMPARISON</span>
+                  <h2>处理前后频谱</h2>
+                </div>
+                <div class="legend">
+                  <span><i class="legend-before"></i>处理前</span>
+                  <span><i class="legend-after"></i>处理后</span>
+                  <span class="analysis-tag" id="spectrumAnalysis">FFT 4096</span>
+                </div>
+              </header>
+              <div class="canvas-wrap spectrum-wrap">
+                <canvas id="spectrumCanvas" aria-label="处理前后频谱图"></canvas>
+                <div class="canvas-empty" id="spectrumEmpty">启动音频引擎以绘制频谱</div>
+              </div>
+            </section>
+
+            <section class="panel waveform-panel">
+              <header class="panel-heading">
+                <div>
+                  <span class="eyebrow">STEREO WAVEFORM</span>
+                  <h2>双声道波形</h2>
+                </div>
+                <div class="waveform-labels" aria-hidden="true">
+                  <span>L</span><span>R</span>
+                </div>
+              </header>
+              <div class="canvas-wrap waveform-wrap">
+                <canvas id="waveformCanvas" aria-label="处理前后双声道波形"></canvas>
+                <i class="playhead" id="playhead" aria-hidden="true"></i>
+              </div>
+            </section>
+
+            <section class="panel routing-panel">
+              <header class="panel-heading">
+                <div>
+                  <span class="eyebrow">SIGNAL ROUTING · LIVE</span>
+                  <h2>节点连接</h2>
+                </div>
+                <span class="hint">点击画布节点可切换旁路</span>
+              </header>
+              <div class="canvas-wrap routing-wrap">
+                <canvas id="nodeCanvas" aria-label="音频节点连接图"></canvas>
+              </div>
+            </section>
+          </div>
+
+          <aside class="control-column" aria-label="参数控制">
+            <section class="panel source-panel">
+              <header class="panel-heading compact">
+                <div>
+                  <span class="eyebrow">PROCEDURAL SOURCE</span>
+                  <h2>合成素材</h2>
+                </div>
+                <span class="badge badge-cyan">WEB AUDIO</span>
+              </header>
+              <div class="control-row">
+                <label for="balance">声道平衡</label>
+                <output id="balanceOut">+12</output>
+                <input id="balance" type="range" min="-100" max="100" step="1" value="12" />
+              </div>
+              <div class="control-row">
+                <label for="width">立体声宽度</label>
+                <output id="widthOut">1.00</output>
+                <input id="width" type="range" min="0" max="150" step="1" value="100" />
+              </div>
+              <div class="control-row">
+                <label for="beatAccent">节拍重音</label>
+                <output id="beatAccentOut">62%</output>
+                <input id="beatAccent" type="range" min="0" max="100" step="1" value="62" />
+              </div>
+            </section>
+
+            <section class="panel chain-panel">
+              <header class="panel-heading compact">
+                <div>
+                  <span class="eyebrow">PROCESSING CHAIN</span>
+                  <h2>处理节点</h2>
+                </div>
+                <span class="badge" id="activeNodeCount">4 / 4 启用</span>
+              </header>
+
+              <article class="node-card" data-node="hpf">
+                <header>
+                  <span class="node-order">01</span>
+                  <div><strong>高通</strong><small>HIGH-PASS</small></div>
+                  <label class="switch" title="旁路高通">
+                    <input id="bypassHpf" type="checkbox" />
+                    <span></span><em>旁路</em>
+                  </label>
+                </header>
+                <div class="node-body">
+                  <div class="control-row">
+                    <label for="hpfFreq">截止频率</label>
+                    <output id="hpfFreqOut">90 Hz</output>
+                    <input id="hpfFreq" type="range" min="20" max="800" step="1" value="90" />
+                  </div>
+                  <div class="control-row">
+                    <label for="hpfQ">斜率 / Q</label>
+                    <output id="hpfQOut">0.80</output>
+                    <input id="hpfQ" type="range" min="30" max="800" step="1" value="80" />
+                  </div>
+                </div>
+              </article>
+
+              <article class="node-card" data-node="notch">
+                <header>
+                  <span class="node-order">02</span>
+                  <div><strong>陷波</strong><small>NOTCH</small></div>
+                  <label class="switch" title="旁路陷波">
+                    <input id="bypassNotch" type="checkbox" />
+                    <span></span><em>旁路</em>
+                  </label>
+                </header>
+                <div class="node-body">
+                  <div class="control-row">
+                    <label for="notchFreq">中心频率</label>
+                    <output id="notchFreqOut">1.00 kHz</output>
+                    <input id="notchFreq" type="range" min="200" max="8000" step="10" value="1000" />
+                  </div>
+                  <div class="control-row">
+                    <label for="notchQ">品质因数 Q</label>
+                    <output id="notchQOut">7.0</output>
+                    <input id="notchQ" type="range" min="10" max="200" step="1" value="70" />
+                  </div>
+                </div>
+              </article>
+
+              <article class="node-card" data-node="gate">
+                <header>
+                  <span class="node-order">03</span>
+                  <div><strong>门限</strong><small>NOISE GATE</small></div>
+                  <label class="switch" title="旁路门限">
+                    <input id="bypassGate" type="checkbox" />
+                    <span></span><em>旁路</em>
+                  </label>
+                </header>
+                <div class="node-body">
+                  <div class="control-row">
+                    <label for="gateThreshold">门限</label>
+                    <output id="gateThresholdOut">−38 dB</output>
+                    <input id="gateThreshold" type="range" min="-80" max="-6" step="1" value="-38" />
+                  </div>
+                  <div class="control-row compact-row">
+                    <div>
+                      <label for="gateAttack">启动</label>
+                      <output id="gateAttackOut">4 ms</output>
+                    </div>
+                    <div>
+                      <label for="gateRelease">释放</label>
+                      <output id="gateReleaseOut">110 ms</output>
+                    </div>
+                  </div>
+                  <div class="control-row">
+                    <label for="gateLookahead">预读延迟</label>
+                    <output id="gateLookaheadOut">8.0 ms</output>
+                    <input id="gateLookahead" type="range" min="0" max="20" step="0.5" value="8" />
+                  </div>
+                  <div class="dual-range">
+                    <input id="gateAttack" type="range" min="0.5" max="60" step="0.5" value="4" />
+                    <input id="gateRelease" type="range" min="20" max="600" step="5" value="110" />
+                  </div>
+                </div>
+              </article>
+
+              <article class="node-card" data-node="clip">
+                <header>
+                  <span class="node-order">04</span>
+                  <div><strong>软削波</strong><small>SOFT CLIP</small></div>
+                  <label class="switch" title="旁路软削波">
+                    <input id="bypassClip" type="checkbox" />
+                    <span></span><em>旁路</em>
+                  </label>
+                </header>
+                <div class="node-body">
+                  <div class="control-row">
+                    <label for="clipDrive">驱动</label>
+                    <output id="clipDriveOut">+8.0 dB</output>
+                    <input id="clipDrive" type="range" min="0" max="30" step="0.5" value="8" />
+                  </div>
+                  <div class="control-row">
+                    <label for="clipMix">干湿比</label>
+                    <output id="clipMixOut">100%</output>
+                    <input id="clipMix" type="range" min="0" max="100" step="1" value="100" />
+                  </div>
+                  <div class="control-row">
+                    <label for="masterGain">输出增益</label>
+                    <output id="masterGainOut">−6.0 dB</output>
+                    <input id="masterGain" type="range" min="-18" max="12" step="0.5" value="-6" />
+                  </div>
+                </div>
+              </article>
+            </section>
+          </aside>
+        </div>
+
+        <section class="operations-grid">
+          <article class="panel preflight-panel">
+            <header class="panel-heading compact">
+              <div>
+                <span class="eyebrow">EXPORT PREFLIGHT</span>
+                <h2>导出预检</h2>
+              </div>
+              <span class="badge" id="preflightBadge">等待分析</span>
+            </header>
+            <div class="check-list">
+              <span class="check-item" id="checkSilence"><i>•</i>静音</span>
+              <span class="check-item" id="checkClip"><i>•</i>削波</span>
+              <span class="check-item" id="checkChannel"><i>•</i>声道缺失</span>
+              <span class="check-item" id="checkOverload"><i>•</i>过载</span>
+            </div>
+            <div class="export-row">
+              <button class="button button-export" id="exportButton" type="button">
+                <span aria-hidden="true">↓</span> 导出 WAV
+              </button>
+              <span id="exportHint">先完成一次有效声学分析</span>
+            </div>
+            <div class="export-history" id="exportHistory">
+              <span>尚无导出记录</span>
+              <span>重复载入后会在此比较时长与关键峰值</span>
+            </div>
+          </article>
+
+          <article class="panel test-panel">
+            <header class="panel-heading compact">
+              <div>
+                <span class="eyebrow">ACOUSTIC ASSERTIONS</span>
+                <h2>真实音频验证</h2>
+              </div>
+              <button class="button button-small" id="selfTestButton" type="button">运行离线验证</button>
+            </header>
+            <p class="panel-copy">每次验证都会重新离线渲染音频，比较波形能量，而不是读取界面数字。</p>
+            <div class="test-results">
+              <div class="test-row" id="channelTest">
+                <span class="test-name">左右声道</span>
+                <span class="test-detail">等待运行</span>
+                <b>—</b>
+              </div>
+              <div class="test-row" id="bandTest">
+                <span class="test-name">频段能量</span>
+                <span class="test-detail">等待运行</span>
+                <b>—</b>
+              </div>
+              <div class="test-row" id="beatTest">
+                <span class="test-name">节拍包络</span>
+                <span class="test-detail">等待运行</span>
+                <b>—</b>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel snapshot-panel">
+            <header class="panel-heading compact">
+              <div>
+                <span class="eyebrow">PARAMETER RECALL</span>
+                <h2>参数快照</h2>
+              </div>
+              <span class="badge badge-amber" id="snapshotBadge">LOCAL</span>
+            </header>
+            <div class="snapshot-controls">
+              <input id="snapshotName" type="text" maxlength="32" value="处理参数 A" aria-label="快照名称" />
+              <button class="button button-small" id="saveSnapshotButton" type="button">保存参数组</button>
+            </div>
+            <div class="snapshot-load">
+              <select id="snapshotSelect" aria-label="已保存参数组">
+                <option value="">暂无参数快照</option>
+              </select>
+              <button class="button button-small" id="loadSnapshotButton" type="button">重新载入</button>
+            </div>
+            <div class="consistency-readout" id="consistencyReadout">
+              <span>重载一致性</span>
+              <strong>尚未比较</strong>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <span>PHASE LAB · DETERMINISTIC 48 kHz / 24-bit WAV</span>
+        <span>所有素材、处理与导出信号均由 Web Audio 实时生成</span>
+      </footer>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="js/dsp.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/wav.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

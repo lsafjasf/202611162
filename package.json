@@ -1,0 +1,9 @@
+{
+  "name": "phase-lab-uid680",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic 10-second Web Audio restoration workstation",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
