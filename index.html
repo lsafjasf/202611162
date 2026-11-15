@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>迁徙季滩涂停歇地管理模拟</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>迁徙季滩涂停歇地管理 · 14 天模拟</h1>
+    <div class="top-metrics">
+      <span id="timeLabel">—</span>
+      <span>天气：<b id="weatherLabel">—</b></span>
+      <span>预算：<b id="budgetLabel">—</b></span>
+      <span>平均栖息评分：<b id="scoreLabel">—</b></span>
+      <span id="recordLabel">—</span>
+      <span>Seed：<b id="seedLabel">—</b></span>
+      <span title="同 seed 同时刻状态指纹">状态指纹：<b id="checksumLabel">—</b></span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input id="seedInput" type="text" placeholder="输入 seed" aria-label="seed">
+    <button id="btnRestart">重开（同 seed 复现）</button>
+    <button id="btnPause">暂停</button>
+    <button id="btnStep">单步 +1h</button>
+    <button id="btnSpeed">速度 <b id="speedLabel">4x</b></button>
+    <button id="btnMute">静音</button>
+    <button id="btnDemo">播放固定演示序列</button>
+    <button id="btnChecksum">查看 checksum</button>
+  </div>
+
+  <div id="banner" class="banner" style="display:none"></div>
+
+  <div id="lastResult" class="last-result">
+    <span class="lr-title">最近一次操作结果：</span>
+    <span id="lastResultBody" class="lr-body">尚无已完成判定的操作（操作发起 24 小时后在此显示稳态/临界/失败与前后对比）</span>
+  </div>
+
+  <main class="layout">
+    <section class="left">
+      <canvas id="canvas" width="960" height="300"></canvas>
+      <div id="sitePanels" class="site-grid"></div>
+    </section>
+
+    <aside class="right">
+      <h2>事件与操作日志</h2>
+      <div class="table-wrap log-wrap">
+        <table>
+          <thead><tr><th>时间</th><th>事件</th></tr></thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+    </aside>
+  </main>
+
+  <section class="tables">
+    <h2>操作结果：稳态 / 临界 / 失败前后对比（24 小时窗口）</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>发起时间</th><th>操作</th><th>判定</th><th>栖息评分</th>
+          <th>水深</th><th>食物</th><th>干扰</th><th>鸟群数量</th><th>窗口</th>
+        </tr></thead>
+        <tbody id="evalBody"></tbody>
+      </table>
+    </div>
+
+    <h2>恢复策略记录：触发阈值与代价对比</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>站点</th><th>策略</th><th>触发时间</th><th>触发阈值快照</th>
+          <th>直接支出</th><th>门票损失</th><th>总代价</th><th>恢复结果与最终指标</th>
+        </tr></thead>
+        <tbody id="strategyBody"></tbody>
+      </table>
+    </div>
+
+    <div class="notes">
+      <h3>规则与策略说明</h3>
+      <ul>
+        <li>目标：14 天（336 小时）内完成 3 次成功停留记录，且最低栖息评分 ≥ 50。</li>
+        <li>水深 15–35cm 觅食区完整，≥60cm 或近干涸时觅食区消失；游客过近或高频巡查会抬升干扰，干扰 ≥60 触发惊飞。</li>
+        <li>紧急封育（3200 元）：远端路线+高频巡查+食物补给，36h 内快速拉回稳态，门票损失大。</li>
+        <li>弹性缓冲（1400 元）：栈道+常规巡查+少量补给，48h 缓慢恢复，便宜但临界期更长、失败风险更高。</li>
+        <li>全部随机量由 seed 在初始化时预生成，状态按小时连续积分；同 seed 重开后鸟群、天气、初始资源、关键事件顺序一致。</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="js/rng.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

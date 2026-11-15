@@ -1,0 +1,10 @@
+{
+  "name": "mudflat-stopover-sim",
+  "version": "1.0.0",
+  "description": "迁徙季滩涂停歇地 14 天管理模拟（确定性 seed、Canvas、Web Audio）",
+  "private": true,
+  "scripts": {
+    "test": "node tests/sim.test.js",
+    "start": "python3 -m http.server 8000"
+  }
+}
