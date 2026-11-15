@@ -1,0 +1,13 @@
+{
+  "name": "migratory-fishway-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "可复现的三鱼种鱼道水文与照明调度模拟",
+  "scripts": {
+    "dev": "python3 -m http.server 4173 --bind 0.0.0.0",
+    "start": "python3 -m http.server 4173 --bind 0.0.0.0",
+    "test": "node --test tests/sim.test.mjs",
+    "check": "node --check src/sim.js && node --check src/render.js && node --check src/audio.js && node --check src/app.js"
+  }
+}
