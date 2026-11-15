@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="雨林树冠滑索配送：选择入口、吊包重量与制动时机，把三件工具安全送到高塔。"
+    />
+    <title>树冠索道 · 三件工具的最后一程</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><circle cx=%2216%22 cy=%2216%22 r=%2215%22 fill=%22%230b211c%22/><path d=%22M7 11l18 10M7 21l18-10%22 stroke=%22%23f6c453%22 stroke-width=%222%22/></svg>" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <div>
+            <p class="eyebrow">CANOPY RELAY / 维护任务 07</p>
+            <h1>树冠索道</h1>
+          </div>
+        </div>
+        <div class="run-indicators" aria-label="当前运行状态">
+          <span class="status-chip"><i class="dot live"></i><span id="phaseLabel">待出发</span></span>
+          <span class="status-chip mono">SEED <b id="seedChip">CANOPY-653</b></span>
+          <span class="status-chip mono">布局 <b id="layoutChip">········</b></span>
+        </div>
+        <div class="top-actions">
+          <button id="pauseBtn" class="icon-button" type="button" title="暂停或继续 (Esc)">
+            <span class="button-symbol">Ⅱ</span><span id="pauseLabel">暂停</span>
+          </button>
+          <button id="restartBtn" class="icon-button" type="button" title="用同一种子重开">
+            <span class="button-symbol">↻</span>重开
+          </button>
+          <button id="muteBtn" class="icon-button" type="button" title="切换声音">
+            <span class="button-symbol" id="muteIcon">◖</span><span id="muteLabel">声音开</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="stage-column">
+          <div class="stage" id="stageWrap">
+            <canvas id="gameCanvas" aria-label="雨林树冠滑索场景"></canvas>
+
+            <div class="hud hud-mission">
+              <p class="hud-label">本次吊包</p>
+              <strong id="hudTaskName">绝缘胶带</strong>
+              <span id="hudTaskMeta">目标 1 / 3 · 高塔平台</span>
+            </div>
+
+            <div class="hud hud-resources">
+              <div><span>工具</span><b id="hudTools">3/3</b></div>
+              <div><span>制动垫</span><b id="hudPads">3</b></div>
+              <div><span>回收索</span><b id="hudCords">2</b></div>
+            </div>
+
+            <div class="speed-hud" aria-live="polite">
+              <div class="speed-heading">
+                <span>到站速度</span>
+                <span class="safe-note">安全 ≤ 11.5 m/s</span>
+              </div>
+              <div class="speed-readout">
+                <strong id="speedValue">0.0</strong><span>m/s</span>
+                <em id="speedState">待出发</em>
+              </div>
+              <div class="speed-track">
+                <div class="safe-zone"></div>
+                <i id="speedFill"></i>
+                <span class="speed-threshold">11.5</span>
+              </div>
+              <div class="ride-progress">
+                <i id="rideProgressFill"></i>
+                <span id="rideProgressLabel">入口 0%</span>
+              </div>
+            </div>
+
+            <div class="brake-hud" id="brakeHud">
+              <div class="brake-key"><kbd>SPACE</kbd><span>按住制动</span></div>
+              <div class="brake-track"><i id="brakeFill"></i></div>
+              <p id="brakeHint">雨量会削弱制动力</p>
+            </div>
+
+            <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+            <div class="overlay" id="pauseOverlay" hidden>
+              <div class="overlay-card compact-card">
+                <p class="eyebrow">运行已冻结</p>
+                <h2>暂停中</h2>
+                <p>滑行、计时与天气声景均已暂停。可用检查点继续，不会刷新页面。</p>
+                <div class="overlay-actions">
+                  <button id="resumeBtn" class="primary-button" type="button">继续滑行</button>
+                  <button id="pauseRestartBtn" class="secondary-button" type="button">重开本局</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="overlay" id="failureOverlay" hidden>
+              <div class="overlay-card failure-card">
+                <div class="failure-mark" id="failureMark">!</div>
+                <p class="eyebrow" id="failureEyebrow">吊包撞击平台</p>
+                <h2 id="failureTitle">到站超速</h2>
+                <p id="failureReason"></p>
+                <div class="failure-stats">
+                  <div><span>最近检查点</span><strong id="checkpointLabel">任务起点</strong></div>
+                  <div><span>回收代价</span><strong id="recoveryCost">无 · 平台抢修</strong></div>
+                </div>
+                <div class="overlay-actions">
+                  <button id="recoverBtn" class="primary-button" type="button">从检查点恢复</button>
+                  <button id="failureRestartBtn" class="secondary-button" type="button">重开本局</button>
+                </div>
+                <p class="fine-print">恢复会回滚本次吊包与失败操作，不重建地图。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="event-strip">
+            <span class="event-strip-label">现场回传</span>
+            <p id="eventFeed">等待选择入口与吊包重量。</p>
+            <span class="event-clock mono" id="eventClock">00:00.0</span>
+          </div>
+        </section>
+
+        <aside class="control-column">
+          <section class="panel mission-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">DELIVERY MANIFEST</p>
+                <h2>三件工具</h2>
+              </div>
+              <span class="count-badge" id="missionCount">3 件待送</span>
+            </div>
+            <div class="tool-list" id="toolList"></div>
+            <p class="panel-note" id="missionNote">每成功到站一件，自动写入检查点。</p>
+          </section>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">STEP 01</p>
+                <h2>选择滑索入口</h2>
+              </div>
+              <span class="mini-hint">三种线路</span>
+            </div>
+            <div class="route-list" id="routeList"></div>
+          </section>
+
+          <section class="panel weight-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">STEP 02</p>
+                <h2>设定吊包重量</h2>
+              </div>
+              <span class="weight-badge"><b id="weightValue">12</b> kg</span>
+            </div>
+            <input id="weightRange" class="weight-range" type="range" min="6" max="18" step="1" value="12" />
+            <div class="range-labels"><span>轻 · 易制动</span><span>重 · 惯性大</span></div>
+            <p class="weight-feedback" id="weightFeedback">标准载荷：重力与制动力平衡。</p>
+          </section>
+
+          <section class="panel forecast-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">LINE FORECAST</p>
+                <h2>线路预判</h2>
+              </div>
+              <button id="verifyBtn" class="text-button" type="button">校验布局</button>
+            </div>
+            <div class="forecast-grid">
+              <div><span>降雨</span><b id="forecastRain">--</b><i class="forecast-bar"><em id="rainBar"></em></i></div>
+              <div><span>风速</span><b id="forecastWind">--</b><i class="forecast-bar wind"><em id="windBar"></em></i></div>
+              <div><span>下垂</span><b id="forecastSag">--</b><i class="forecast-bar sag"><em id="sagBar"></em></i></div>
+              <div><span>障碍</span><b id="forecastObstacles">--</b><i class="forecast-bar hazard"><em id="hazardBar"></em></i></div>
+            </div>
+            <p class="forecast-advice" id="forecastAdvice">选择入口后显示制动建议。</p>
+            <button id="launchBtn" class="launch-button" type="button" disabled>
+              <span>挂包出发</span><small id="launchSubline">先选入口</small>
+            </button>
+          </section>
+
+          <section class="panel compact-panel">
+            <div class="resource-row">
+              <div><span>制动垫</span><b id="padCount">3 / 3</b></div>
+              <div><span>回收索</span><b id="cordCount">2 / 2</b></div>
+              <div><span>检查点</span><b id="checkpointCount">起点</b></div>
+            </div>
+            <div class="seed-control">
+              <label for="seedInput">固定种子</label>
+              <div>
+                <input id="seedInput" type="text" value="CANOPY-653" spellcheck="false" />
+                <button id="applySeedBtn" type="button">载入</button>
+              </div>
+            </div>
+            <div class="seed-actions">
+              <button id="sameSeedBtn" class="secondary-button small" type="button">同种子新局</button>
+              <button id="helpBtn" class="text-button" type="button">操作说明</button>
+            </div>
+            <p class="seed-verdict" id="seedVerdict">同种子新局会核对下方布局指纹。</p>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="footer">
+        <span><kbd>SPACE</kbd> 制动</span>
+        <span><kbd>ESC</kbd> 暂停</span>
+        <span><kbd>R</kbd> 重开</span>
+        <span class="footer-tip">雨会降低滑轮摩擦；风速与下垂改变到站速度。</span>
+      </footer>
+    </div>
+
+    <div class="modal-layer" id="summaryModal" hidden>
+      <div class="summary-card" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
+        <div class="summary-head">
+          <div>
+            <p class="eyebrow">RUN STATE / SAVED LOCALLY</p>
+            <h2 id="summaryTitle">任务完成</h2>
+            <p id="summaryLead"></p>
+          </div>
+          <button id="closeSummaryBtn" class="close-button" type="button" aria-label="关闭摘要">×</button>
+        </div>
+        <div class="summary-stats">
+          <div><span>目标核对</span><strong id="summaryTargets">0 / 3</strong></div>
+          <div><span>剩余资源</span><strong id="summaryResources">--</strong></div>
+          <div><span>最终用时</span><strong id="summaryTime">00:00.0</strong></div>
+        </div>
+        <div class="summary-body">
+          <section>
+            <h3>实际路径</h3>
+            <ol class="path-list" id="summaryPath"></ol>
+          </section>
+          <section>
+            <h3>失败与恢复</h3>
+            <p id="summaryFailures">无碰撞或搁浅。</p>
+            <div class="check-grid" id="summaryChecks"></div>
+          </section>
+        </div>
+        <div class="summary-actions">
+          <button id="downloadSummaryBtn" class="primary-button" type="button">导出 JSON 摘要</button>
+          <button id="summaryNewRunBtn" class="secondary-button" type="button">同种子再开一局</button>
+        </div>
+        <p class="fine-print" id="summarySaveNote">摘要同时保存在本机 localStorage。</p>
+      </div>
+    </div>
+
+    <div class="modal-layer" id="helpModal" hidden>
+      <div class="summary-card help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+        <div class="summary-head">
+          <div>
+            <p class="eyebrow">FIELD MANUAL</p>
+            <h2 id="helpTitle">操作与判负条件</h2>
+          </div>
+          <button id="closeHelpBtn" class="close-button" type="button" aria-label="关闭说明">×</button>
+        </div>
+        <div class="manual-grid">
+          <div><b>01</b><h3>选入口</h3><p>每条线路的雨量、风速、下垂与障碍均来自固定 seed。</p></div>
+          <div><b>02</b><h3>配吊包</h3><p>重包惯性大、到站更快；轻包更容易被刹停。</p></div>
+          <div><b>03</b><h3>按住制动</h3><p>过晚制动会撞毁平台；过早持续制动会停在线中。</p></div>
+          <div><b>04</b><h3>检查点恢复</h3><p>碰撞回滚到最近成功到站；搁浅额外耗一根回收索，仍可恢复。</p></div>
+        </div>
+        <p class="fine-print">声音随滑行速度、雨势与制动状态实时变化。首次交互后启用。</p>
+      </div>
+    </div>
+
+    <script src="src/simulation.js"></script>
+    <script src="src/audio.js"></script>
+    <script src="src/renderer.js"></script>
+    <script src="src/game.js"></script>
+  </body>
+</html>
