@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#071719" />
+    <title>深渊货筏 · 低矮溶洞运输任务</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23051719'/%3E%3Cpath d='M14 42h36l-4 8H18z' fill='%23ffc06a'/%3E%3Cpath d='M20 32h24v8H20z' fill='%23b7f5d4'/%3E%3Cpath d='M24 18h16v12H24z' fill='%2370dfd1'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div>
+            <h1>深渊货筏</h1>
+            <p>ABYSSAL FREIGHT <span>/</span> UNDERGROUND RUN</p>
+          </div>
+        </div>
+
+        <div class="hud" aria-label="航次状态">
+          <div class="hud-cell battery-cell">
+            <span class="hud-label">电量</span>
+            <div class="battery-row">
+              <div class="battery-track"><i id="batteryFill"></i></div>
+              <strong id="batteryValue">100%</strong>
+            </div>
+          </div>
+          <div class="hud-cell">
+            <span class="hud-label">物资箱</span>
+            <strong id="cargoValue">0 / 3</strong>
+            <span class="hud-sub" id="cargoSub">待装载</span>
+          </div>
+          <div class="hud-cell">
+            <span class="hud-label">航时</span>
+            <strong id="timeValue">00:00.0</strong>
+            <span class="hud-sub">暂停时停止计时</span>
+          </div>
+          <div class="hud-cell checkpoint-hud">
+            <span class="hud-label">检查点</span>
+            <strong id="checkpointValue">入洞口</strong>
+            <span class="hud-sub" id="checkpointSub">自动记录</span>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button class="icon-button" id="audioButton" type="button" title="声音开关 (M)" aria-label="声音开关">
+            <span class="audio-icon" aria-hidden="true">◖</span><span id="audioLabel">声音</span>
+          </button>
+          <button class="icon-button" id="pauseButton" type="button" title="暂停 (P)" aria-label="暂停">
+            <span aria-hidden="true">Ⅱ</span><span>暂停</span>
+          </button>
+          <button class="icon-button" id="restartButton" type="button" title="重开 (R)" aria-label="重开">
+            <span aria-hidden="true">↻</span><span>重开</span>
+          </button>
+          <button class="verify-button" id="sameSeedButton" type="button" title="使用同一随机种子重新开始">
+            同种子新局
+          </button>
+        </div>
+      </header>
+
+      <main class="stage" id="stage">
+        <canvas id="gameCanvas" aria-label="低矮溶洞中的电动货筏剖面"></canvas>
+        <div class="stage-shade" aria-hidden="true"></div>
+
+        <section class="mission-card glass" aria-labelledby="missionTitle">
+          <div class="card-kicker"><span>MISSION 07</span><b id="seedBadge">SEED 20261116</b></div>
+          <h2 id="missionTitle">把三只物资箱<br />送进地下仓库</h2>
+          <p class="mission-copy">沿暗河搜集漂流货箱。压低货架穿过钟乳石，保持配重，别让电量见底。</p>
+          <div class="objective-list">
+            <div class="objective-row">
+              <span class="objective-icon">▣</span>
+              <span>物资箱</span>
+              <strong id="objectiveCargo">0 / 3</strong>
+            </div>
+            <div class="objective-row">
+              <span class="objective-icon">⌁</span>
+              <span>仓库坐标</span>
+              <strong id="objectiveDistance">2.9 km</strong>
+            </div>
+            <div class="objective-row">
+              <span class="objective-icon">◇</span>
+              <span>上次检查点</span>
+              <strong id="objectiveCheckpoint">入洞口</strong>
+            </div>
+          </div>
+          <div class="seed-note" id="seedNote">地图、货箱与障碍均由固定种子生成</div>
+        </section>
+
+        <aside class="telemetry glass" aria-label="船体遥测">
+          <div class="panel-heading">
+            <span>RAFT TELEMETRY</span>
+            <i class="live-dot"></i>
+          </div>
+          <div class="telemetry-grid">
+            <div class="meter-block">
+              <div class="meter-label"><span>顶部净空</span><strong id="clearanceValue">--</strong></div>
+              <div class="meter-track clearance-track"><i id="clearanceFill"></i></div>
+              <small id="clearanceHint">保持货架低于钟乳石</small>
+            </div>
+            <div class="meter-block">
+              <div class="meter-label"><span>船体倾斜</span><strong id="tiltValue">0°</strong></div>
+              <div class="tilt-gauge">
+                <i class="tilt-center"></i>
+                <i id="tiltNeedle"></i>
+              </div>
+              <small id="tiltHint">用 Q / E 移动配重</small>
+            </div>
+          </div>
+          <div class="telemetry-lines">
+            <div><span>航速</span><strong id="speedValue">0.0 kn</strong></div>
+            <div><span>暗流</span><strong id="currentValue">平流</strong></div>
+            <div><span>载重</span><strong id="loadValue">空载</strong></div>
+            <div><span>碰撞</span><strong id="collisionValue">0 次</strong></div>
+          </div>
+          <div class="attitude-track"><i id="attitudeFill"></i><span>配重滑轨</span></div>
+        </aside>
+
+        <div class="route-panel glass">
+          <div class="panel-heading">
+            <span>ROUTE / 实时航迹</span>
+            <b id="routeProgress">0%</b>
+          </div>
+          <canvas id="minimap" width="300" height="74" aria-label="航迹小地图"></canvas>
+          <div class="route-legend">
+            <span><i class="legend-raft"></i>货筏</span>
+            <span><i class="legend-crate"></i>物资箱</span>
+            <span><i class="legend-hazard"></i>危险段</span>
+          </div>
+        </div>
+
+        <div class="event-feed glass" id="eventFeed" aria-live="polite">
+          <div class="feed-time">SYS 00:00</div>
+          <div class="feed-message" id="feedMessage">等待启航。固定种子 <b id="feedSeed">20261116</b> 已加载。</div>
+        </div>
+
+        <div class="center-prompt" id="centerPrompt">
+          <span class="prompt-key">D</span>
+          <div><b>启动电机</b><small>向右推进，开始运输</small></div>
+        </div>
+
+        <section class="control-deck glass" aria-label="操作说明">
+          <div class="controls-title"><span>CONTROLS</span><b id="inputEcho">输入待命</b></div>
+          <div class="key-groups">
+            <div class="key-group">
+              <span class="group-label">推进</span>
+              <button class="key" data-key="a" type="button">A</button>
+              <button class="key" data-key="d" type="button">D</button>
+            </div>
+            <div class="key-group">
+              <span class="group-label">配重</span>
+              <button class="key" data-key="q" type="button">Q</button>
+              <button class="key" data-key="e" type="button">E</button>
+            </div>
+            <div class="key-group">
+              <span class="group-label">货架</span>
+              <button class="key" data-key="w" type="button">W</button>
+              <button class="key" data-key="s" type="button">S</button>
+            </div>
+            <div class="key-group">
+              <span class="group-label">制动</span>
+              <button class="key wide-key" data-key=" " type="button">SPACE</button>
+            </div>
+          </div>
+          <div class="control-actions">
+            <button type="button" id="failureDemoButton">故障演练</button>
+            <button type="button" id="summaryButton">状态摘要</button>
+          </div>
+        </section>
+
+        <div class="toast-stack" id="toastStack" aria-live="assertive"></div>
+
+        <div class="keyboard-help glass">
+          <span><kbd>P</kbd> 暂停</span>
+          <span><kbd>R</kbd> 重开</span>
+          <span><kbd>M</kbd> 声音</span>
+        </div>
+      </main>
+
+      <div class="modal-layer is-open" id="briefingModal" role="dialog" aria-modal="true" aria-labelledby="briefingTitle">
+        <div class="briefing-card modal-card">
+          <div class="briefing-art" aria-hidden="true">
+            <span class="art-lamp"></span>
+            <span class="art-raft"></span>
+            <span class="art-crate one"></span>
+            <span class="art-crate two"></span>
+            <span class="art-crate three"></span>
+          </div>
+          <div class="briefing-content">
+            <div class="card-kicker"><span>DIVE ORDER / 07</span><b>固定种子</b></div>
+            <h2 id="briefingTitle">暗河低矮，<br />但仓库还等着补给。</h2>
+            <p>驾驶电动货筏穿过溶洞。装载 3 只物资箱，在钟乳石、暗流和浅滩之间找到一条能回来的航迹。</p>
+            <div class="briefing-points">
+              <div><b>01</b><span>减速靠近货箱即可装载</span></div>
+              <div><b>02</b><span>低净空时按 S 压低货架</span></div>
+              <div><b>03</b><span>偏载超过 12° 会增加耗电</span></div>
+            </div>
+            <div class="briefing-meta">
+              <span>种子 <b id="briefingSeed">20261116</b></span>
+              <span>地图签名 <b id="briefingSignature">--------</b></span>
+            </div>
+            <div class="briefing-actions">
+              <button class="primary-button" id="startButton" type="button">启航 <span>→</span></button>
+              <button class="secondary-button" id="resumeStoredButton" type="button" hidden>恢复检查点</button>
+            </div>
+            <p class="storage-note" id="storageNote">每到一个安全段会自动保存检查点与状态摘要。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-layer" id="pauseModal" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+        <div class="modal-card pause-card">
+          <span class="overline">RUN SUSPENDED</span>
+          <h2 id="pauseTitle">航次已暂停</h2>
+          <p>时间、电量与暗流均已冻结。检查配重和检查点后再继续。</p>
+          <div class="pause-stats">
+            <div><span>电量</span><b id="pauseBattery">100%</b></div>
+            <div><span>货箱</span><b id="pauseCargo">0 / 3</b></div>
+            <div><span>检查点</span><b id="pauseCheckpoint">入洞口</b></div>
+          </div>
+          <div class="modal-actions">
+            <button class="primary-button" id="resumeButton" type="button">继续航程</button>
+            <button class="secondary-button" id="pauseRestartButton" type="button">重开本局</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-layer" id="endModal" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+        <div class="modal-card result-card">
+          <div class="result-head">
+            <div>
+              <span class="overline" id="endOverline">MISSION COMPLETE</span>
+              <h2 id="endTitle">补给已入库</h2>
+              <p id="endReason">所有物资箱安全抵达地下仓库。</p>
+            </div>
+            <div class="result-seal" id="resultSeal">✓</div>
+          </div>
+          <div class="result-layout">
+            <div class="result-stats">
+              <div class="stat-tile"><span>目标数量</span><b id="endTarget">3 / 3</b><small>物资箱</small></div>
+              <div class="stat-tile"><span>剩余资源</span><b id="endBattery">0%</b><small>电量 + <i id="endCells">0</i> 备电</small></div>
+              <div class="stat-tile"><span>最终用时</span><b id="endTime">00:00.0</b><small>暂停不计时</small></div>
+              <div class="stat-tile"><span>碰撞 / 检查点</span><b id="endCollisions">0 / 1</b><small>自动记录</small></div>
+            </div>
+            <div class="route-result">
+              <div class="panel-heading"><span>航迹回放</span><b id="endRouteLength">0 m</b></div>
+              <canvas id="endMap" width="520" height="150" aria-label="完成航次路径"></canvas>
+            </div>
+          </div>
+          <div class="failure-summary">
+            <span>失败原因摘要</span>
+            <strong id="endFailureSummary">无</strong>
+          </div>
+          <div class="save-line" id="endSaveLine"><i></i>状态摘要已保存到本机</div>
+          <div class="modal-actions">
+            <button class="primary-button" id="endSameSeedButton" type="button">同种子再开一局</button>
+            <button class="secondary-button" id="downloadSummaryButton" type="button">下载摘要 JSON</button>
+            <button class="secondary-button danger-ghost" id="endRestoreButton" type="button">恢复检查点</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-layer" id="summaryModal" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
+        <div class="modal-card summary-card">
+          <div class="result-head">
+            <div>
+              <span class="overline">CURRENT RUN STATE</span>
+              <h2 id="summaryTitle">本局状态摘要</h2>
+              <p>摘要会同时写入本机存储，刷新页面不会清空检查点。</p>
+            </div>
+            <button class="close-button" id="closeSummaryButton" type="button" aria-label="关闭">×</button>
+          </div>
+          <pre id="summaryJson"></pre>
+          <div class="modal-actions">
+            <button class="primary-button" id="summaryDownloadButton" type="button">下载 JSON</button>
+            <button class="secondary-button" id="summaryCopyButton" type="button">复制摘要</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/game.js"></script>
+  </body>
+</html>
