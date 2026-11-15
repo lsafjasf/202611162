@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1011" />
+  <title>线材智造 · 三卷拉丝中控台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d1816'/%3E%3Cpath d='M9 9l7 14M16 9l7 14M7 16h18' stroke='%2385e8c1' stroke-width='1.6' fill='none'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div>
+        <div class="eyebrow">WIRE DRAWING CONTROL</div>
+        <h1>线材智造 <span>/ 三卷拉丝中控台</span></h1>
+      </div>
+    </div>
+
+    <div class="batch-identity">
+      <span class="micro-label">当前批次</span>
+      <strong id="headerBatchId">待启动</strong>
+      <span id="headerCoil" class="batch-coil">卷 0 / 3</span>
+    </div>
+
+    <div class="top-actions">
+      <button id="soundButton" class="icon-button sound-on" type="button" aria-pressed="true" title="电机基频与摩擦噪声随工况变化">
+        <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span id="soundLabel">声音</span>
+      </button>
+      <div class="timebase" role="group" aria-label="仿真时基">
+        <span>时基</span>
+        <button type="button" data-timebase="1" class="active">1×</button>
+        <button type="button" data-timebase="2">2×</button>
+        <button type="button" data-timebase="4">4×</button>
+      </div>
+      <button id="pauseButton" class="button button-ghost" type="button" disabled>
+        <span class="pause-icon" aria-hidden="true"></span>
+        <span>暂停</span>
+      </button>
+      <button id="resetButton" class="button button-ghost" type="button" disabled>重置当前批次</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="hero-grid">
+      <div class="visual-column">
+        <section class="panel machine-panel">
+          <div class="panel-header">
+            <div>
+              <span class="section-index">01</span>
+              <div>
+                <h2>三模连续拉丝</h2>
+                <p>2.35 mm 母材 → 三道模具 → 0.80 mm 成品</p>
+              </div>
+            </div>
+            <div id="runStateBadge" class="state-badge is-idle"><i></i><span>待机</span></div>
+          </div>
+
+          <div class="canvas-shell" id="canvasShell">
+            <canvas id="lineCanvas" aria-label="金属线经过三道模具并被收卷的实时动画"></canvas>
+            <div class="canvas-hud canvas-hud-left">
+              <span class="micro-label">LINE OVERVIEW</span>
+              <strong id="canvasBatch">NO ACTIVE BATCH</strong>
+            </div>
+            <div class="canvas-hud canvas-hud-right">
+              <span class="live-dot"></span>
+              <span id="canvasClock">00:00.0</span>
+            </div>
+            <div class="coil-queue" id="coilQueue" aria-label="三卷生产进度"></div>
+            <div id="recoveryHud" class="recovery-hud" hidden>
+              <span class="recovery-ring" aria-hidden="true"></span>
+              <div>
+                <small>SAFETY RECOVERY</small>
+                <strong>恢复自检 <b id="recoveryCountdown">8.0</b> s</strong>
+              </div>
+            </div>
+            <div id="pauseOverlay" class="canvas-overlay pause-overlay" hidden>
+              <div class="overlay-icon pause-large" aria-hidden="true"></div>
+              <span class="micro-label">SIMULATION PAUSED</span>
+              <strong>生产已暂停</strong>
+              <p>设备时序与工艺累计已冻结，可检查参数后继续。</p>
+            </div>
+            <div id="failureOverlay" class="failure-overlay" hidden>
+              <div class="failure-card">
+                <div class="failure-topline">
+                  <span class="alarm-badge"><i></i> 联锁停机</span>
+                  <span id="failureTime">T+00:00</span>
+                </div>
+                <div class="failure-device">
+                  <span class="micro-label">触发设备 / FAULT UNIT</span>
+                  <h3 id="failureDevice">收卷电机</h3>
+                </div>
+                <div class="failure-trigger">
+                  <span>触发值</span>
+                  <strong id="failureValue">—</strong>
+                  <em id="failureLimit">限值 —</em>
+                </div>
+                <p id="failureDetail">设备联锁已切断收卷动力，当前线材整段报废。</p>
+                <div id="failureResidual" class="failure-residual" hidden></div>
+                <div class="failure-actions">
+                  <button id="safeParamsButton" class="button button-ghost" type="button">恢复标准工艺</button>
+                  <button id="recoverButton" class="button button-primary" type="button">排除故障并恢复 · 8s 自检</button>
+                </div>
+                <p id="recoverHint" class="recover-hint"></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="telemetry-grid">
+            <article class="metric-card" data-metric="tension">
+              <div class="metric-head"><span>实时张力</span><i class="metric-icon tension-icon"></i></div>
+              <div><strong id="tensionValue">—</strong><span class="unit">N</span></div>
+              <div class="limit-track"><span id="tensionBar"></span><i style="left:76%"></i></div>
+              <footer><span>安全区间</span><b>≤ 155 N</b></footer>
+            </article>
+            <article class="metric-card" data-metric="heat">
+              <div class="metric-head"><span>最高模温</span><i class="metric-icon heat-icon"></i></div>
+              <div><strong id="heatValue">—</strong><span class="unit">°C</span></div>
+              <div class="limit-track warm"><span id="heatBar"></span><i style="left:79%"></i></div>
+              <footer><span>润滑换热</span><b>≤ 95 °C</b></footer>
+            </article>
+            <article class="metric-card" data-metric="diameter">
+              <div class="metric-head"><span>成品线径</span><i class="metric-icon diameter-icon"></i></div>
+              <div><strong id="diameterValue">—</strong><span class="unit">mm</span></div>
+              <div class="tolerance-map">
+                <span class="tolerance-zone"></span>
+                <i id="diameterNeedle"></i>
+                <b class="target-mark"></b>
+              </div>
+              <footer><span>目标 0.800</span><b>± 0.012 mm</b></footer>
+            </article>
+            <article class="metric-card" data-metric="power">
+              <div class="metric-head"><span>实时功耗</span><i class="metric-icon power-icon"></i></div>
+              <div><strong id="powerValue">—</strong><span class="unit">kW</span></div>
+              <div class="power-bars" id="powerBars" aria-hidden="true"></div>
+              <footer><span>批次峰值</span><b id="peakPowerMini">— kW</b></footer>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel equipment-panel">
+          <div class="panel-header compact">
+            <div>
+              <span class="section-index">02</span>
+              <div>
+                <h2>关键设备时序</h2>
+                <p>启停时刻精确记录至 0.1 s</p>
+              </div>
+            </div>
+            <span id="equipmentSummary" class="micro-label">4 台设备待机</span>
+          </div>
+          <div class="equipment-strip" id="equipmentStrip"></div>
+          <div class="event-log">
+            <div class="log-heading">
+              <span>最近事件</span>
+              <span>SIM CLOCK</span>
+            </div>
+            <div id="eventLog" class="log-lines" aria-live="polite"></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="side-column">
+        <section class="panel control-panel">
+          <div class="panel-header compact">
+            <div>
+              <span class="section-index">03</span>
+              <div>
+                <h2>工艺参数</h2>
+                <p>调整后实时作用于运行中的线材</p>
+              </div>
+            </div>
+            <button id="presetButton" class="text-button" type="button">标准工艺</button>
+          </div>
+          <div class="control-body">
+            <label class="control-group" for="speedRange">
+              <div class="control-label">
+                <span>收卷速度 <small>TAKE-UP SPEED</small></span>
+                <output id="speedOutput" for="speedRange">48 <i>m/min</i></output>
+              </div>
+              <input id="speedRange" class="range range-cyan" type="range" min="18" max="92" step="1" value="48" />
+              <div class="range-scale"><span>18</span><span>安全 ≤ 62</span><span>92</span></div>
+            </label>
+
+            <label class="control-group" for="lubeRange">
+              <div class="control-label">
+                <span>润滑流量 <small>LUBRICANT FLOW</small></span>
+                <output id="lubeOutput" for="lubeRange">72 <i>%</i></output>
+              </div>
+              <input id="lubeRange" class="range range-blue" type="range" min="10" max="100" step="1" value="72" />
+              <div class="range-scale"><span>10</span><span>推荐 55–85</span><span>100</span></div>
+            </label>
+
+            <div class="die-controls">
+              <div class="die-heading">
+                <span>模孔直径 <small>DIE APERTURE</small></span>
+                <span>目标线径 ↓</span>
+              </div>
+              <label class="die-row" for="die1Range">
+                <span class="die-code">D1</span>
+                <input id="die1Range" class="range range-metal" type="range" min="1.64" max="1.80" step="0.005" value="1.72" />
+                <output id="die1Output" for="die1Range">1.720</output>
+              </label>
+              <label class="die-row" for="die2Range">
+                <span class="die-code">D2</span>
+                <input id="die2Range" class="range range-metal" type="range" min="1.14" max="1.26" step="0.005" value="1.20" />
+                <output id="die2Output" for="die2Range">1.200</output>
+              </label>
+              <label class="die-row final" for="die3Range">
+                <span class="die-code">D3</span>
+                <input id="die3Range" class="range range-metal" type="range" min="0.76" max="0.85" step="0.001" value="0.800" />
+                <output id="die3Output" for="die3Range">0.800</output>
+              </label>
+              <div class="die-target">
+                <span>成品窗口</span>
+                <b>0.788 — 0.812 mm</b>
+              </div>
+            </div>
+
+            <div class="control-diagnostics">
+              <div class="diagnostic-value">
+                <span>工艺负荷预测</span>
+                <b id="processForecast">稳定</b>
+              </div>
+              <div id="forecastMeter" class="forecast-meter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+
+            <div class="start-row">
+              <button id="startButton" class="button button-start" type="button">
+                <span class="start-triangle" aria-hidden="true"></span>
+                <span>启动批次</span>
+              </button>
+              <button id="faultMenuButton" class="button button-danger-ghost" type="button" aria-expanded="false">
+                故障演练
+              </button>
+            </div>
+            <div id="faultMenu" class="fault-menu" hidden>
+              <button type="button" data-fault="takeup">收卷电机轴承卡滞</button>
+              <button type="button" data-fault="pump">润滑泵失压 62%</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel snapshot-panel">
+          <div class="panel-header compact">
+            <div>
+              <span class="section-index">04</span>
+              <div>
+                <h2>设备快照</h2>
+                <p>冻结当前参数与设备状态</p>
+              </div>
+            </div>
+            <button id="snapshotButton" class="button button-small" type="button">保存快照</button>
+          </div>
+          <div id="snapshotList" class="snapshot-list"></div>
+        </section>
+      </aside>
+    </section>
+
+    <section class="verification-panel panel">
+      <div class="panel-header compact">
+        <div>
+          <span class="section-index">05</span>
+          <div>
+            <h2>场景验证</h2>
+            <p>独立引擎回放 · 不污染当前生产批次</p>
+          </div>
+        </div>
+        <button id="runVerificationButton" class="button button-small" type="button">重新验证三种工况</button>
+      </div>
+      <div id="verificationGrid" class="verification-grid"></div>
+      <div id="verificationFootnote" class="verification-footnote">
+        验证包含：故障定位、参数越限、8 秒恢复自检及累计误差归零检查。
+      </div>
+    </section>
+
+    <section class="records-grid">
+      <section class="panel archive-panel">
+        <div class="panel-header compact">
+          <div>
+            <span class="section-index">06</span>
+            <div>
+              <h2>批次档案</h2>
+              <p>已完成批次只读封存 · 勾选两批并排比较</p>
+            </div>
+          </div>
+          <span class="lock-indicator"><i></i> IMMUTABLE</span>
+        </div>
+        <div class="table-wrap">
+          <table class="batch-table">
+            <thead>
+              <tr>
+                <th>对比</th><th>批次</th><th>结果</th><th>良品</th><th>废品</th>
+                <th>峰值功耗</th><th>停机原因</th><th>异常处理</th>
+              </tr>
+            </thead>
+            <tbody id="batchTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel compare-panel" id="comparePanel">
+        <div class="panel-header compact">
+          <div>
+            <span class="section-index">07</span>
+            <div>
+              <h2>并排比较</h2>
+              <p id="compareSubtitle">从档案中选择两个批次</p>
+            </div>
+          </div>
+          <span id="compareCount" class="micro-label">0 / 2</span>
+        </div>
+        <div id="compareContent" class="compare-content"></div>
+      </section>
+    </section>
+
+    <footer class="footer">
+      <span>DRAWING LINE 03 · 三卷连续拉丝数字孪生</span>
+      <span>批次完成即封存 · 数据采样 10 Hz · 会话内只读存储</span>
+    </footer>
+  </main>
+
+  <dialog id="summaryDialog" class="summary-dialog">
+    <form method="dialog">
+      <div id="summaryContent"></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
