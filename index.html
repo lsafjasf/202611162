@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>湿地保护区水位管理模拟</title>
+<style>
+  :root { --bg:#0e1a14; --panel:#16261e; --line:#2c4a3a; --txt:#d8efe2; --warn:#ffb454; --bad:#ff6b6b; --ok:#7be495; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:14px/1.5 "Microsoft YaHei",sans-serif; }
+  #wrap { max-width:1180px; margin:0 auto; padding:10px; display:grid; grid-template-columns:1fr 320px; gap:10px; }
+  canvas { width:100%; background:#0a1410; border:1px solid var(--line); border-radius:6px; display:block; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px 10px; margin-bottom:8px; }
+  .panel h3 { margin:0 0 6px; font-size:13px; color:#9fd4b4; letter-spacing:1px; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:2px 8px; font-size:13px; }
+  .kv b { text-align:right; font-variant-numeric:tabular-nums; }
+  .ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+  button { background:#234534; color:var(--txt); border:1px solid var(--line); border-radius:4px; padding:4px 10px; cursor:pointer; margin:2px 2px 2px 0; font-size:13px; }
+  button:hover { background:#2e5a44; } button:disabled { opacity:.4; cursor:not-allowed; }
+  button.on { background:#3d7a54; border-color:var(--ok); }
+  input[type=range] { width:100%; }
+  input[type=number] { width:80px; background:#0c1811; color:var(--txt); border:1px solid var(--line); border-radius:4px; padding:2px 6px; }
+  #log { height:170px; overflow-y:auto; font-size:12px; }
+  #log div { border-bottom:1px dashed #234534; padding:2px 0; white-space:pre-wrap; }
+  #lastOp { min-height:34px; font-size:13px; color:#ffe9b8; }
+  .ctl-row { margin:6px 0; }
+  .ctl-row label { display:flex; justify-content:space-between; font-size:13px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  td,th { border:1px solid var(--line); padding:2px 4px; text-align:center; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div>
+    <canvas id="cv" width="840" height="470"></canvas>
+    <div class="panel">
+      <h3>操作台</h3>
+      <div class="ctl-row"><label>进水闸开度 <b id="gateV">40%</b></label>
+        <input type="range" id="gate" min="0" max="100" value="40"></div>
+      <div class="ctl-row"><label>溢流堰堰顶高程 <b id="weirV">0.80 m</b></label>
+        <input type="range" id="weir" min="50" max="100" value="80"></div>
+      <div class="ctl-row">
+        <button id="pump">排水泵：关</button>
+        <button id="stratA" disabled>策略A 紧急强排 (300元)</button>
+        <button id="stratB" disabled>策略B 生态调蓄 (80元)</button>
+      </div>
+      <div class="ctl-row">
+        <button id="pause">暂停</button>
+        <button id="restart">重开(同seed)</button>
+        种子 <input type="number" id="seed" value="20260601">
+        <button id="applySeed">以该seed重开</button>
+        <button id="speed">速度 1x</button>
+        <button id="mute">声音：开</button>
+      </div>
+    </div>
+    <div class="panel"><h3>最近一次操作结果</h3><div id="lastOp">（尚无操作）</div></div>
+  </div>
+  <div>
+    <div class="panel"><h3>环境指标</h3><div class="kv" id="metrics"></div></div>
+    <div class="panel"><h3>恢复策略记录（触发阈值 / 代价 / 最终生态指标）</h3>
+      <table id="stratTable"><thead><tr><th>策略</th><th>触发水位</th><th>代价</th><th>历时</th><th>最终生态分</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="panel"><h3>状态评估记录（稳态 / 临界 / 失败）</h3><div id="stateLog" style="max-height:120px;overflow-y:auto;font-size:12px"></div></div>
+    <div class="panel"><h3>事件日志</h3><div id="log"></div></div>
+  </div>
+</div>
+<script>
+'use strict';
+//PART2
+// ===== 确定性随机 =====
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+// ===== 常量 =====
+const DAYS=10, HOURS=DAYS*24, DT=0.02;          // 模拟步长 0.02h，状态连续积分
+const SHALLOW_LO=0.15, SHALLOW_HI=0.45;          // 鸟类浅水区目标水深(m)
+const FLOOD=0.90;                                 // 栈道面板高程(m)，超过即淹没
+const DRY=0.05;                                   // 生态干旱阈值
+const SPECIES=[
+  {name:'黑翅长脚鹬', lo:0.05, hi:0.25, max:8, color:'#f2f2f2'},
+  {name:'白鹭',       lo:0.15, hi:0.45, max:6, color:'#ffffff'},
+  {name:'绿头鸭',     lo:0.30, hi:0.80, max:10, color:'#7fae5c'},
+];
+
+// ===== 全局状态 =====
+let S=null, seed=20260601;
+
+function newState(sd){
+  const rng=mulberry32(sd);
+  // 预生成天气序列：逐小时雨量(mm/h) + 逐日蒸发系数 —— 同 seed 完全一致
+  const rain=[], evapDay=[];
+  for(let d=0; d<DAYS; d++){
+    evapDay.push(0.7+rng()*0.8);
+    const pattern=rng();               // 决定当日雨型
+    let wet=pattern<0.3?0:pattern<0.65?1:2; // 0晴 1阵雨 2暴雨
+    for(let h=0; h<24; h++){
+      let r=0;
+      if(wet===1 && rng()<0.35) r=1+rng()*4;
+      if(wet===2 && rng()<0.6)  r=4+rng()*9;
+      rain.push(r);
+    }
+  }
+  // 鸟类目标个体数与站位（同 seed 固定）
+  const birds=SPECIES.map(sp=>({sp, count:0,
+    slots:Array.from({length:sp.max},()=>({x:0.15+rng()*0.6, ph:rng()*6.28}))}));
+  return {
+    rng, rain, evapDay, birds,
+    t:0, level:0.35, budget:3000, eco:100,
+    gate:0.4, weirCrest:0.80, pumpOn:false,
+    boostUntil:-1, modUntil:-1, saved:null,
+    shallowH:0, floodH:0, dryH:0, dayShallow:0, dayFlood:0,
+    dayOK:[], outOfRangeH:0, steadyH:0, critFlag:false,
+    state:'稳态', lastOp:'（尚无操作）', over:false, win:false,
+    stratLog:[], stateLog:[], events:[],
+  };
+}
+
+function rainAt(t){ // 小时雨量线性插值，保证连续变化而非逐帧跳变
+  const i=Math.min(S.rain.length-2, Math.floor(t)), f=t-i;
+  return S.rain[i]*(1-f)+S.rain[i+1]*f;
+}
+function evapAt(t){
+  const d=Math.min(DAYS-1, Math.floor(t/24)), hod=t%24;
+  const diurnal=Math.max(0, Math.sin((hod-6)/12*Math.PI)); // 正午蒸发最强
+  return 0.006*S.evapDay[d]*diurnal;
+}
+function flows(){
+  const inflow=S.gate*0.05;
+  const h=Math.max(0, S.level-S.weirCrest);
+  const overflow=0.9*Math.pow(h,1.5);
+  const boost=S.t<S.boostUntil;
+  const pump=S.pumpOn?(boost?0.16:0.08):0;
+  return {inflow, overflow, pump, boost, rain:rainAt(S.t)/1000, evap:evapAt(S.t)};
+}
+
+function snapshot(){
+  const total=S.birds.reduce((a,b)=>a+b.count,0);
+  return {t:S.t, level:S.level, budget:S.budget, eco:S.eco, birds:total,
+    shallowH:S.shallowH, floodH:S.floodH};
+}
+function fmtSnap(s){
+  return `t=${s.t.toFixed(1)}h 水位=${s.level.toFixed(2)}m 资金=${s.budget.toFixed(0)}元 `+
+         `生态=${s.eco.toFixed(0)} 鸟=${s.birds.toFixed(1)}只 浅水累计=${s.shallowH.toFixed(1)}h 淹浸=${s.floodH.toFixed(1)}h`;
+}
+function logEvent(msg, cls){
+  S.events.push({t:S.t, msg, cls:cls||''});
+  const el=document.getElementById('log');
+  const d=document.createElement('div');
+  d.className=cls||'';
+  d.textContent=`[第${Math.floor(S.t/24)+1}天 ${String(Math.floor(S.t%24)).padStart(2,'0')}:${String(Math.floor(S.t%1*60)).padStart(2,'0')}] ${msg}`;
+  el.prepend(d);
+}
+function setLastOp(msg){ S.lastOp=msg; document.getElementById('lastOp').textContent=msg; }
+//PART3
+// ===== 状态分级：稳态 / 临界 / 失败操作 =====
+function classify(fl){
+  let st='稳态';
+  if(S.level>=FLOOD-0.10 || S.level<=DRY+0.03 || S.outOfRangeH>3) st='临界';
+  if(S.level>=FLOOD || S.level<=0.005) st='失控';
+  if(S.state==='失控' && st==='临界' && S.level>FLOOD-0.05 && S.level>0.005) st='失控'; // 迟滞，防边界抖动
+  if(st!==S.state){
+    const before=S.stateLog.length?S.stateLog[S.stateLog.length-1].after:null;
+    const rec={from:S.state, to:st, t:S.t, after:snapshot(), before};
+    S.stateLog.push(rec);
+    const el=document.getElementById('stateLog');
+    const d=document.createElement('div');
+    d.innerHTML=`<b class="${st==='稳态'?'ok':st==='临界'?'warn':'bad'}">${S.state}→${st}</b> `+
+      `@t=${S.t.toFixed(1)}h<br>前: ${before?fmtSnap(before):'—'}<br>后: ${fmtSnap(rec.after)}`;
+    el.prepend(d);
+    logEvent(`状态转换 ${S.state} → ${st}`, st==='稳态'?'ok':st==='临界'?'warn':'bad');
+    S.state=st;
+  }
+}
+
+// ===== 失败操作检测（操作与环境冲突） =====
+function checkBadOps(fl){
+  if(S.pumpOn && S.level<0.10 && !S._badPump){
+    S._badPump=true; S.eco=Math.max(0,S.eco-8);
+    const rec={before:fmtSnap(S._preOp||snapshot()), after:fmtSnap(snapshot())};
+    logEvent(`失败操作：浅水区水位过低时抽水，底泥暴露，生态-8。前[${rec.before}] 后[${rec.after}]`,'bad');
+    setLastOp('失败操作：低水位抽水 → 生态分 -8，鸟类惊飞');
+  }
+  if(S.gate>0.6 && fl.rain>0.005 && S.level>FLOOD-0.15 && !S._badGate){
+    S._badGate=true;
+    logEvent(`失败操作：暴雨中高水位仍大开进水闸，栈道面临淹没风险`,'bad');
+    setLastOp('失败操作：暴雨+高水位开闸 → 淹没风险剧增');
+  }
+  if(S.pumpOn && S.level>=0.10) S._badPump=false;
+  if(!(S.gate>0.6 && fl.rain>0.005)) S._badGate=false;
+}
+
+// ===== 恢复策略 =====
+function triggerStrategy(kind){
+  const before=snapshot();
+  if(kind==='A'){ // 紧急强排：快但贵且有生态扰动
+    if(S.budget<300){ setLastOp('资金不足，无法启动紧急强排'); return; }
+    S.budget-=300; S.boostUntil=S.t+6; S.pumpOn=true; S._autoPump=true; S.eco=Math.max(0,S.eco-3);
+    S.stratLog.push({name:'A 紧急强排', trig:S.level, cost:'300元+生态3', start:S.t, dur:6, before});
+    logEvent(`启动策略A 紧急强排（触发水位 ${S.level.toFixed(2)}m，阈值≥0.80m 建议）`,'warn');
+    setLastOp(`策略A启动：强排6h，-300元，生态-3。前[${fmtSnap(before)}]`);
+  }else{ // 生态调蓄：慢但便宜、生态友好
+    if(S.budget<80){ setLastOp('资金不足，无法启动生态调蓄'); return; }
+    S.budget-=80;
+    S.saved={gate:S.gate, crest:S.weirCrest};
+    S.gate=0.1; S.weirCrest=0.55; S.modUntil=S.t+12; S.eco=Math.max(0,S.eco-1);
+    S.stratLog.push({name:'B 生态调蓄', trig:S.level, cost:'80元+生态1', start:S.t, dur:12, before});
+    logEvent(`启动策略B 生态调蓄（触发水位 ${S.level.toFixed(2)}m）：关小进水闸、降低堰顶12h`,'warn');
+    setLastOp(`策略B启动：缓排12h，-80元，生态-1。前[${fmtSnap(before)}]`);
+  }
+  syncControls();
+}
+function finishStrategies(){
+  for(const rec of S.stratLog){
+    if(rec.done || S.t<rec.start+rec.dur) continue;
+    rec.done=true; rec.finalEco=S.eco; rec.after=snapshot();
+    const tb=document.querySelector('#stratTable tbody');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${rec.name}</td><td>${rec.trig.toFixed(2)}m</td><td>${rec.cost}</td>`+
+      `<td>${rec.dur}h</td><td>${rec.finalEco.toFixed(0)}</td>`;
+    tb.appendChild(tr);
+    logEvent(`${rec.name} 结束：${fmtSnap(rec.after)}`,'ok');
+    setLastOp(`${rec.name}完成。前[${fmtSnap(rec.before)}] → 后[${fmtSnap(rec.after)}]`);
+  }
+  if(S.modUntil>0 && S.t>=S.modUntil && S.saved){
+    S.gate=S.saved.gate; S.weirCrest=S.saved.crest; S.saved=null; S.modUntil=-1;
+    syncControls();
+  }
+}
+
+// ===== 主模拟步进（固定步长积分，连续变化） =====
+function step(){
+  if(S.over) return;
+  const fl=flows();
+  if(S._autoPump && S.t>=S.boostUntil){ // 强排结束自动停泵，防止抽干
+    S._autoPump=false; S.pumpOn=false;
+    logEvent('紧急强排结束，排水泵自动停机','ok'); syncControls();
+  }
+  S.level=Math.max(0, Math.min(1.4, S.level+(fl.inflow-fl.overflow-fl.pump+fl.rain-fl.evap)*DT));
+  if(S.pumpOn) S.budget=Math.max(0, S.budget-(fl.boost?40:10)*DT);
+  if(S.budget<=0 && S.pumpOn){ S.pumpOn=false; logEvent('资金耗尽，排水泵自动停机','bad'); syncControls(); }
+  const inShallow=S.level>=SHALLOW_LO && S.level<=SHALLOW_HI;
+  if(inShallow){ S.shallowH+=DT; S.dayShallow+=DT; S.outOfRangeH=0; } else S.outOfRangeH+=DT;
+  if(S.level>=FLOOD){ S.floodH+=DT; S.dayFlood+=DT; S.eco=Math.max(0,S.eco-0.05*DT*10); }
+  if(S.level<=DRY){ S.dryH+=DT; S.eco=Math.max(0,S.eco-0.03*DT*10); }
+  // 鸟类：向适宜度目标连续趋近（非跳变）
+  for(const b of S.birds){
+    const sp=b.sp;
+    let suit=0;
+    if(S.level>=sp.lo && S.level<=sp.hi){
+      const edge=Math.min(S.level-sp.lo, sp.hi-S.level);
+      suit=Math.min(1, edge/0.05);
+    }
+    const target=sp.max*suit*(S.eco>30?1:S.eco/30);
+    b.count+=(target-b.count)*Math.min(1, DT*0.4);
+  }
+  S.t+=DT;
+  // 每日结算
+  if(S.t%24<DT){
+    const ok=S.dayShallow>=8 && S.dayFlood===0;
+    S.dayOK.push(ok);
+    logEvent(`第${S.dayOK.length}天结算：浅水${S.dayShallow.toFixed(1)}h/需8h，淹浸${S.dayFlood.toFixed(1)}h → ${ok?'达标':'未达标'}`, ok?'ok':'warn');
+    S.dayShallow=0; S.dayFlood=0;
+  }
+  checkBadOps(fl);
+  classify(fl);
+  finishStrategies();
+  if(S.t>=HOURS){
+    S.over=true;
+    const okDays=S.dayOK.filter(Boolean).length;
+    S.win=okDays>=8 && S.eco>=40;
+    logEvent(`模拟结束：达标${okDays}/10天，生态分${S.eco.toFixed(0)} → ${S.win?'成功 ✔':'失败 ✘'}`, S.win?'ok':'bad');
+    setLastOp(`十日考核${S.win?'成功':'失败'}：达标${okDays}/10天，生态${S.eco.toFixed(0)}，剩余资金${S.budget.toFixed(0)}元`);
+  }
+}
+//PART4
+// ===== 渲染 =====
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const W=cv.width, H=cv.height, GROUND=H-70, SCALE=300; // 1m -> 300px
+const yOf=m=>GROUND-m*SCALE;
+function bedY(x){ return GROUND-8*Math.sin(x/W*6.28)-4*Math.sin(x/W*17); }
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // 天空与雨
+  const sky=ctx.createLinearGradient(0,0,0,GROUND);
+  sky.addColorStop(0,'#0d1b26'); sky.addColorStop(1,'#16301f');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,GROUND);
+  const rr=rainAt(S.t);
+  if(rr>0.2){
+    ctx.strokeStyle='rgba(150,190,255,'+Math.min(0.7,rr/10)+')';
+    ctx.beginPath();
+    const n=Math.min(120, rr*15);
+    for(let i=0;i<n;i++){
+      const x=(i*97+S.t*400)%W, y=(i*61+S.t*900)%GROUND;
+      ctx.moveTo(x,y); ctx.lineTo(x-3,y+12);
+    }
+    ctx.stroke();
+  }
+  // 床面
+  ctx.fillStyle='#3a2f1d'; ctx.beginPath(); ctx.moveTo(0,H);
+  for(let x=0;x<=W;x+=8) ctx.lineTo(x,bedY(x));
+  ctx.lineTo(W,H); ctx.fill();
+  // 水体
+  const wy=yOf(S.level);
+  ctx.fillStyle='rgba(50,120,180,0.75)';
+  ctx.beginPath(); ctx.moveTo(0,wy);
+  for(let x=0;x<=W;x+=8) ctx.lineTo(x,Math.max(wy,bedY(x)-2));
+  ctx.lineTo(W,bedY(W)); ctx.lineTo(W,GROUND); ctx.lineTo(0,GROUND); ctx.fill();
+  // 浅水目标带
+  ctx.fillStyle='rgba(120,230,150,0.10)';
+  ctx.fillRect(0,yOf(SHALLOW_HI),W,(SHALLOW_HI-SHALLOW_LO)*SCALE);
+  // 栈道（右侧，面板高程 FLOOD）
+  const dy=yOf(FLOOD);
+  ctx.strokeStyle='#8a6b3f'; ctx.lineWidth=5;
+  ctx.beginPath(); ctx.moveTo(W-190,dy); ctx.lineTo(W-10,dy); ctx.stroke();
+  ctx.lineWidth=3;
+  for(let x=W-180;x<W-10;x+=34){ ctx.beginPath(); ctx.moveTo(x,dy); ctx.lineTo(x,bedY(x)); ctx.stroke(); }
+  ctx.fillStyle=S.level>=FLOOD?'#ff6b6b':'#c9a06a';
+  ctx.font='12px sans-serif'; ctx.fillText('观鸟栈道 0.90m', W-185, dy-8);
+  // 进水闸（左）与溢流堰（中）
+  ctx.fillStyle='#5b7a8c'; ctx.fillRect(6,yOf(0.6),26,0.6*SCALE+ (GROUND-yOf(0.6))- (GROUND-bedY(6)));
+  ctx.fillStyle='#9fc6dd'; ctx.fillText('进水闸', 4, yOf(0.66));
+  const wx=W*0.45, crestY=yOf(S.weirCrest);
+  ctx.fillStyle='#6b6b6b'; ctx.fillRect(wx,crestY,16,bedY(wx)-crestY);
+  ctx.fillStyle='#ddd'; ctx.fillText('堰', wx+2, crestY-5);
+  // 排水泵
+  ctx.fillStyle=S.pumpOn?'#3d7a54':'#444'; ctx.fillRect(W*0.7,bedY(W*0.7)-26,34,26);
+  ctx.fillStyle='#fff'; ctx.fillText('泵', W*0.7+10, bedY(W*0.7)-9);
+  // 鸟群
+  for(const b of S.birds){
+    const n=Math.round(b.count);
+    for(let i=0;i<n;i++){
+      const s=b.slots[i], bx=W*(0.12+s.x*0.6);
+      const by=Math.min(yOf(S.level),bedY(bx))-6-2*Math.sin(S.t*2+s.ph);
+      ctx.fillStyle=b.sp.color;
+      ctx.beginPath(); ctx.ellipse(bx,by,6,3.5,0,0,6.29); ctx.fill();
+      ctx.beginPath(); ctx.arc(bx+5,by-4,2.2,0,6.29); ctx.fill();
+    }
+  }
+  // 顶部 HUD
+  ctx.fillStyle='#d8efe2'; ctx.font='14px sans-serif';
+  ctx.fillText(`第${Math.min(10,Math.floor(S.t/24)+1)}天 ${String(Math.floor(S.t%24)).padStart(2,'0')}:00  `+
+    `水位 ${S.level.toFixed(2)}m  雨 ${rr.toFixed(1)}mm/h  状态:${S.state}`, 12, 22);
+  if(S.over){
+    ctx.fillStyle=S.win?'rgba(40,120,60,0.85)':'rgba(140,40,40,0.85)';
+    ctx.fillRect(W/2-150,H/2-34,300,68);
+    ctx.fillStyle='#fff'; ctx.font='22px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(S.win?'✔ 十日考核成功':'✘ 考核失败', W/2, H/2-4);
+    ctx.font='13px sans-serif';
+    ctx.fillText(`达标${S.dayOK.filter(Boolean).length}/10天 生态${S.eco.toFixed(0)} 资金${S.budget.toFixed(0)}元`, W/2, H/2+20);
+    ctx.textAlign='left';
+  }
+}
+
+// ===== 声音：水流噪声 + 鸟鸣，随状态连续变化 =====
+let AC=null, waterGain=null, muted=false, chirpTimer=0;
+function initAudio(){
+  if(AC) return;
+  AC=new (window.AudioContext||window.webkitAudioContext)();
+  const len=AC.sampleRate*2, buf=AC.createBuffer(1,len,AC.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+  const src=AC.createBufferSource(); src.buffer=buf; src.loop=true;
+  const filt=AC.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=700;
+  waterGain=AC.createGain(); waterGain.gain.value=0;
+  src.connect(filt).connect(waterGain).connect(AC.destination); src.start();
+}
+function chirp(){
+  const o=AC.createOscillator(), g=AC.createGain();
+  const f=1800+Math.random()*1200;
+  o.frequency.setValueAtTime(f,AC.currentTime);
+  o.frequency.exponentialRampToValueAtTime(f*0.6,AC.currentTime+0.12);
+  g.gain.setValueAtTime(0.06,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.15);
+  o.connect(g).connect(AC.destination); o.start(); o.stop(AC.currentTime+0.16);
+}
+function updateAudio(dt){
+  if(!AC||muted) { if(waterGain) waterGain.gain.value=0; return; }
+  const fl=flows();
+  waterGain.gain.value=Math.min(0.25,(fl.inflow+fl.overflow+fl.pump)*2.5);
+  chirpTimer-=dt;
+  const birds=S.birds.reduce((a,b)=>a+b.count,0);
+  if(chirpTimer<=0 && birds>1){ chirp(); chirpTimer=1.5+Math.random()*3/Math.sqrt(birds); }
+}
+
+// ===== 指标面板 =====
+function updateMetrics(){
+  const fl=flows();
+  const birds=S.birds.map(b=>`${b.sp.name}:${b.count.toFixed(1)}`).join(' ');
+  const okDays=S.dayOK.filter(Boolean).length;
+  document.getElementById('metrics').innerHTML=
+    `<span>时间</span><b>第${Math.min(10,Math.floor(S.t/24)+1)}天 ${Math.floor(S.t%24)}时</b>`+
+    `<span>水位</span><b class="${S.level>=FLOOD-0.1?'bad':S.level<SHALLOW_LO?'warn':'ok'}">${S.level.toFixed(3)} m</b>`+
+    `<span>雨量 / 蒸发</span><b>${rainAt(S.t).toFixed(1)} mm/h / ${(fl.evap*1000).toFixed(1)} mm/h</b>`+
+    `<span>入流 / 溢流 / 泵排</span><b>${(fl.inflow*1000).toFixed(0)} / ${(fl.overflow*1000).toFixed(0)} / ${(fl.pump*1000).toFixed(0)} L·h⁻¹·单位</b>`+
+    `<span>资金</span><b class="${S.budget<200?'warn':''}">${S.budget.toFixed(0)} 元</b>`+
+    `<span>生态分</span><b class="${S.eco<40?'bad':S.eco<70?'warn':'ok'}">${S.eco.toFixed(0)} / 100</b>`+
+    `<span>浅水达标累计</span><b>${S.shallowH.toFixed(1)} h（当日 ${S.dayShallow.toFixed(1)}h/需8h）</b>`+
+    `<span>栈道淹浸累计</span><b class="${S.floodH>0?'bad':'ok'}">${S.floodH.toFixed(1)} h</b>`+
+    `<span>鸟群</span><b>${birds}</b>`+
+    `<span>达标天数</span><b>${okDays} / 10（需≥8）</b>`+
+    `<span>状态</span><b class="${S.state==='稳态'?'ok':S.state==='临界'?'warn':'bad'}">${S.state}</b>`;
+}
+
+// ===== 控件绑定 =====
+const $=id=>document.getElementById(id);
+function syncControls(){
+  $('gate').value=S.gate*100; $('gateV').textContent=Math.round(S.gate*100)+'%';
+  $('weir').value=S.weirCrest*100; $('weirV').textContent=S.weirCrest.toFixed(2)+' m';
+  $('pump').textContent='排水泵：'+(S.pumpOn?'开':'关');
+  $('pump').classList.toggle('on',S.pumpOn);
+  $('stratA').disabled=S.budget<300||S.t<S.boostUntil;
+  $('stratB').disabled=S.budget<80||S.modUntil>0;
+}
+let paused=false, speed=1;
+$('gate').oninput=e=>{ S._preOp=snapshot(); S.gate=e.target.value/100; $('gateV').textContent=e.target.value+'%';
+  setLastOp(`进水闸开度→${e.target.value}%。前[${fmtSnap(S._preOp)}]`); };
+$('weir').oninput=e=>{ S._preOp=snapshot(); S.weirCrest=e.target.value/100; $('weirV').textContent=S.weirCrest.toFixed(2)+' m';
+  setLastOp(`堰顶高程→${S.weirCrest.toFixed(2)}m。前[${fmtSnap(S._preOp)}]`); };
+$('pump').onclick=()=>{ initAudio(); S._preOp=snapshot(); S.pumpOn=!S.pumpOn;
+  setLastOp(`排水泵${S.pumpOn?'开启（10元/h）':'关闭'}。前[${fmtSnap(S._preOp)}]`); syncControls(); };
+$('stratA').onclick=()=>{ initAudio(); triggerStrategy('A'); };
+$('stratB').onclick=()=>{ initAudio(); triggerStrategy('B'); };
+$('pause').onclick=()=>{ paused=!paused; $('pause').textContent=paused?'继续':'暂停'; };
+$('speed').onclick=()=>{ speed=speed>=8?1:speed*2; $('speed').textContent='速度 '+speed+'x'; };
+$('mute').onclick=()=>{ initAudio(); muted=!muted; $('mute').textContent='声音：'+(muted?'关':'开'); };
+function reset(sd){
+  seed=sd; S=newState(sd);
+  document.getElementById('log').innerHTML='';
+  document.getElementById('stateLog').innerHTML='';
+  document.querySelector('#stratTable tbody').innerHTML='';
+  document.getElementById('lastOp').textContent='（尚无操作）';
+  paused=false; $('pause').textContent='暂停';
+  logEvent(`模拟开始 seed=${sd}：天气序列/初始资源(3000元)/鸟群目标已按种子固定`,'ok');
+  syncControls();
+}
+$('restart').onclick=()=>reset(seed);
+$('applySeed').onclick=()=>reset(parseInt($('seed').value)||1);
+
+// ===== 主循环：固定步长积分，帧率无关 =====
+reset(seed);
+let acc=0, last=performance.now();
+function frame(now){
+  const dtReal=Math.min(0.1,(now-last)/1000); last=now;
+  if(!paused){
+    acc+=dtReal*speed*4; // 1x ≈ 4 模拟小时/现实秒
+    while(acc>=DT){ step(); acc-=DT; }
+    updateAudio(dtReal);
+  }
+  draw(); updateMetrics(); syncControls();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
