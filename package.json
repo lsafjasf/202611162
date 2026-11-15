@@ -1,0 +1,26 @@
+{
+  "name": "uid672",
+  "version": "1.0.0",
+  "description": "林区虫害模拟调度系统（确定性 Canvas 模拟）",
+  "main": "index.html",
+  "scripts": {
+    "test": "node test/engine-test.js && node test/dom-smoke.js",
+    "build": "node tools/build-scenarios.js",
+    "serve": "python3 -m http.server 8923"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lsafjasf/202611162.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lsafjasf/202611162/issues"
+  },
+  "homepage": "https://github.com/lsafjasf/202611162#readme",
+  "dependencies": {
+    "jsdom": "^31.0.1"
+  }
+}

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>林区虫害模拟调度系统</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>林区虫害模拟调度系统</h1>
+    <div class="ctrl">
+      <label>Seed <input id="seed" value="demo-seed-7" size="14"></label>
+      <button id="btn-start" class="primary">▶ 继续</button>
+      <button id="btn-restart">↻ 重开</button>
+      <button id="btn-mute">🔊 声音</button>
+      <label>速度
+        <select id="speed">
+          <option value="1">1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel canvas-panel">
+      <div class="panel-h">
+        <span>林班态势（10×7）</span>
+        <span id="status" class="badge">已暂停</span>
+      </div>
+      <canvas id="map"></canvas>
+      <div id="flash" class="flash">点击林班执行所选设备操作</div>
+      <div class="legend">
+        <span><i class="sw green"></i>低虫口</span>
+        <span><i class="sw amber"></i>中虫口</span>
+        <span><i class="sw red"></i>热区</span>
+        <span><i class="sw hatch"></i>监测遗漏</span>
+        <span><i class="sw residue"></i>农药残留</span>
+        <span><i class="sw benefit"></i>益虫密度条</span>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <div class="panel-h">当前环境指标</div>
+        <ul class="metrics">
+          <li><span>模拟时间</span><b id="day">0.00</b> 天</li>
+          <li><span>风向 / 风速</span><b id="wind">—</b></li>
+          <li><span>感染面积</span><b id="infected">0%</b></li>
+          <li><span>平均害虫密度</span><b id="pest">0</b></li>
+          <li><span>平均益虫密度</span><b id="benefit">0</b></li>
+          <li><span>平均植被健康</span><b id="health">0</b></li>
+          <li><span>热区林班数</span><b id="hot">0</b></li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <div class="panel-h">资源库存</div>
+        <ul class="metrics">
+          <li><span>无人机架次</span><b id="r-sorties">0</b></li>
+          <li><span>诱捕器</span><b id="r-traps">0</b></li>
+          <li><span>喷药剂量</span><b id="r-spray">0</b></li>
+          <li><span>预算</span><b id="r-budget">0</b></li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <div class="panel-h">设备操作（点选林班）</div>
+        <div class="tools">
+          <button id="tool-survey" class="tool-btn">🛰 无人机监测</button>
+          <button id="tool-trap" class="tool-btn">🪤 布设诱捕器</button>
+          <button id="tool-spray" class="tool-btn">🧪 喷药</button>
+        </div>
+        <label class="mode-line">喷药范围
+          <select id="spray-mode">
+            <option value="target">局部 3×3（益虫误伤低）</option>
+            <option value="broad">广域 5×5（误伤益虫高）</option>
+          </select>
+        </label>
+        <div class="last-op">最近操作：<span id="last-op">—</span></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-h">固定序列复现（同 seed）</div>
+        <div class="tools">
+          <button id="scn-steady">稳态场景</button>
+          <button id="scn-critical">临界场景</button>
+          <button id="scn-failure">失败场景</button>
+        </div>
+        <div class="tools">
+          <button id="btn-compare">刷新前后对比</button>
+          <button id="btn-recovery">恢复策略对比</button>
+        </div>
+        <ul id="events" class="events"><li>暂无暴发事件</li></ul>
+      </section>
+    </aside>
+  </main>
+
+  <section class="panel tables">
+    <div class="panel-h">三档场景：资源 / 生物状态 / 时间 前后对比</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>场景</th><th>阶段</th><th>时间(天)</th><th>感染面积</th>
+          <th>害虫密度</th><th>益虫密度</th><th>植被健康</th>
+          <th>预算</th><th>诱捕/喷药</th>
+        </tr></thead>
+        <tbody id="compare-body"></tbody>
+      </table>
+    </div>
+    <div class="panel-h second">恢复策略对比（共同触发状态，阈值与最终生态指标）</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>策略</th><th>触发阈值</th><th>额外代价</th><th>最终感染</th>
+          <th>最终益虫</th><th>最终植被</th><th>结论</th>
+        </tr></thead>
+        <tbody id="recovery-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <script src="js/rng.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

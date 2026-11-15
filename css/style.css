@@ -1,0 +1,160 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  background: #eef2ee;
+  color: #243026;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 22px;
+  background: #1f3d2b;
+  color: #eef5ef;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.topbar h1 { font-size: 19px; margin: 0; font-weight: 600; }
+.ctrl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ctrl label { font-size: 13px; display: flex; align-items: center; gap: 5px; }
+.ctrl input, .ctrl select {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #b7c6ba;
+  font-size: 13px;
+}
+button {
+  padding: 7px 12px;
+  border: 1px solid #356142;
+  border-radius: 7px;
+  background: #f6faf6;
+  color: #23402c;
+  cursor: pointer;
+  font-size: 13px;
+}
+button:hover { background: #e2efe4; }
+button.primary { background: #2f7d4c; color: #fff; border-color: #2f7d4c; }
+button.primary:hover { background: #276b41; }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(640px, 1fr) 340px;
+  gap: 16px;
+  padding: 16px 22px;
+  align-items: start;
+}
+.panel {
+  background: #fff;
+  border: 1px solid #d7e0d8;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.panel-h {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panel-h.second { margin-top: 18px; }
+.badge {
+  font-size: 12px;
+  background: #e7f0e9;
+  border: 1px solid #b6cebd;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+canvas { display: block; max-width: 100%; }
+.flash {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #356142;
+  background: #eef6f0;
+  border-left: 3px solid #2f7d4c;
+  padding: 7px 10px;
+  border-radius: 4px;
+  min-height: 18px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #4a5a4e;
+}
+.legend span { display: flex; align-items: center; gap: 5px; }
+.sw { width: 15px; height: 15px; border-radius: 3px; display: inline-block; }
+.sw.green { background: rgb(58, 122, 69); }
+.sw.amber { background: rgb(214, 164, 58); }
+.sw.red { background: rgb(200, 62, 52); }
+.sw.hatch {
+  background: repeating-linear-gradient(45deg, #cfd6cf, #cfd6cf 3px,
+    #555 3px, #555 5px);
+}
+.sw.residue { background: rgba(120, 70, 180, 0.55); }
+.sw.benefit { background: #12461e; }
+
+.side { display: flex; flex-direction: column; gap: 14px; }
+.metrics { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.metrics li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 2px;
+  border-bottom: 1px dashed #e1e8e2;
+}
+.metrics li span { color: #5c6b5f; }
+.metrics li b { font-weight: 600; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.tool-btn.active {
+  background: #2f7d4c;
+  color: #fff;
+  border-color: #2f7d4c;
+}
+.mode-line { font-size: 13px; display: block; margin: 6px 0; }
+.mode-line select { width: 100%; padding: 6px; margin-top: 4px; }
+.last-op {
+  font-size: 12.5px;
+  margin-top: 8px;
+  background: #f5f8f5;
+  padding: 8px;
+  border-radius: 6px;
+}
+.last-op .good { color: #2f7d4c; }
+.last-op .bad { color: #b4352c; font-weight: 600; }
+.events {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 12px;
+  max-height: 120px;
+  overflow: auto;
+  color: #8a3a32;
+}
+.events li { padding: 3px 0; border-bottom: 1px dotted #e4d5d3; }
+
+.tables { margin: 0 22px 26px; }
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  min-width: 720px;
+}
+th, td {
+  border: 1px solid #dde5de;
+  padding: 7px 9px;
+  text-align: center;
+}
+th { background: #f1f6f2; font-weight: 600; }
+.res-success { background: #e8f5ec; }
+.res-marginal { background: #fdf6e3; }
+.res-fail { background: #fbe9e7; }
+
+@media (max-width: 1080px) {
+  .layout { grid-template-columns: 1fr; }
+}

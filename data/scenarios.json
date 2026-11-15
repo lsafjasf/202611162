@@ -1,0 +1,568 @@
+{
+  "seed": "demo-seed-7",
+  "generatedAt": "2026-11-15T20:15:26.309Z",
+  "config": {
+    "COLS": 10,
+    "ROWS": 7,
+    "DAYS": 21,
+    "STEP_H": 0.25,
+    "HOTSPOT_PEST": 35,
+    "INFECTED_PEST": 5,
+    "PEST_R": 0.22,
+    "PEST_K": 100,
+    "BENEFIT_R": 0.05,
+    "DISPERSE_BASE": 0.014,
+    "OUTBREAK_PEST": 45,
+    "OUTBREAK_JUMP": 20,
+    "OUTBREAK_SURVEY_GAP": 2,
+    "TRAP_KILL": 7.5,
+    "TRAP_LIFE": 7,
+    "SPRAY_KILL": 0.82,
+    "SPRAY_BENEFIT_HIT": 0.55,
+    "SPRAY_RESIDUE": 0.1,
+    "RECOVER_INFECT": 0.25,
+    "FAIL_INFECT": 0.55,
+    "FAIL_BENEFIT": 35,
+    "WIN_INFECT": 0.25,
+    "WIN_BENEFIT": 55
+  },
+  "scenarios": {
+    "steady": {
+      "label": "稳态（积极综合管控）",
+      "actions": [
+        {
+          "at": 0.010417,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 0.010417,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 0.010417,
+          "type": "survey",
+          "x": 2,
+          "y": 5
+        },
+        {
+          "at": 0.010417,
+          "type": "survey",
+          "x": 3,
+          "y": 5
+        },
+        {
+          "at": 0.010417,
+          "type": "spray",
+          "x": 8,
+          "y": 3,
+          "mode": "target"
+        },
+        {
+          "at": 0.010417,
+          "type": "spray",
+          "x": 4,
+          "y": 4,
+          "mode": "target"
+        },
+        {
+          "at": 0.010417,
+          "type": "spray",
+          "x": 2,
+          "y": 5,
+          "mode": "target"
+        },
+        {
+          "at": 2.000064,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 2.000064,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 4.000128,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 4.000128,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 6.000192,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 6.000192,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 8.000256,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 8.000256,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 8.364851,
+          "type": "spray",
+          "x": 8,
+          "y": 3,
+          "mode": "target"
+        },
+        {
+          "at": 8.656527,
+          "type": "spray",
+          "x": 4,
+          "y": 4,
+          "mode": "target"
+        },
+        {
+          "at": 8.771114,
+          "type": "spray",
+          "x": 2,
+          "y": 5,
+          "mode": "target"
+        },
+        {
+          "at": 10.00032,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 10.00032,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 12.000384,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 12.000384,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 14.000448,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 14.000448,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 16.000512,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 16.000512,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 18.000576,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 18.000576,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 18.271418,
+          "type": "spray",
+          "x": 8,
+          "y": 3,
+          "mode": "target"
+        }
+      ],
+      "result": "success",
+      "start": {
+        "label": "初始状态",
+        "day": 0,
+        "budget": 220,
+        "sorties": 4,
+        "traps": 12,
+        "spray": 12,
+        "infectedRatio": 0.1,
+        "avgPest": 3.005813375531164,
+        "avgBenefit": 100,
+        "avgHealth": 100,
+        "hotspots": 3
+      },
+      "trigger": null,
+      "end": {
+        "label": "第 21 天",
+        "day": 21.000672,
+        "budget": 4,
+        "sorties": 3,
+        "traps": 12,
+        "spray": 5,
+        "infectedRatio": 0.1,
+        "avgPest": 3.794270435909673,
+        "avgBenefit": 75.47414973146527,
+        "avgHealth": 99.55575939316793,
+        "hotspots": 2
+      },
+      "events": 2
+    },
+    "critical": {
+      "label": "临界（监测与处置不足）",
+      "actions": [
+        {
+          "at": 0.010417,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 0.010417,
+          "type": "survey",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 0.010417,
+          "type": "survey",
+          "x": 2,
+          "y": 5
+        },
+        {
+          "at": 0.010417,
+          "type": "trap",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 0.010417,
+          "type": "trap",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 0.020834,
+          "type": "survey",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 0.020834,
+          "type": "trap",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 0.020834,
+          "type": "trap",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 0.031251,
+          "type": "trap",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 0.031251,
+          "type": "trap",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 0.041668,
+          "type": "trap",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 0.041668,
+          "type": "trap",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 0.052085,
+          "type": "trap",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 0.052085,
+          "type": "trap",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "at": 0.062502,
+          "type": "trap",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "at": 0.062502,
+          "type": "trap",
+          "x": 2,
+          "y": 5
+        },
+        {
+          "at": 4.000128,
+          "type": "survey",
+          "x": 3,
+          "y": 5
+        },
+        {
+          "at": 4.000128,
+          "type": "survey",
+          "x": 1,
+          "y": 4
+        },
+        {
+          "at": 4.000128,
+          "type": "survey",
+          "x": 2,
+          "y": 5
+        },
+        {
+          "at": 4.010545,
+          "type": "survey",
+          "x": 3,
+          "y": 5
+        },
+        {
+          "at": 8.000256,
+          "type": "survey",
+          "x": 1,
+          "y": 4
+        },
+        {
+          "at": 8.000256,
+          "type": "survey",
+          "x": 3,
+          "y": 5
+        },
+        {
+          "at": 8.000256,
+          "type": "survey",
+          "x": 9,
+          "y": 4
+        },
+        {
+          "at": 8.000256,
+          "type": "spray",
+          "x": 1,
+          "y": 4,
+          "mode": "target"
+        },
+        {
+          "at": 8.000256,
+          "type": "spray",
+          "x": 3,
+          "y": 5,
+          "mode": "target"
+        },
+        {
+          "at": 8.010673,
+          "type": "survey",
+          "x": 9,
+          "y": 4
+        },
+        {
+          "at": 8.010673,
+          "type": "spray",
+          "x": 9,
+          "y": 4,
+          "mode": "target"
+        },
+        {
+          "at": 8.010673,
+          "type": "spray",
+          "x": 7,
+          "y": 3,
+          "mode": "target"
+        }
+      ],
+      "result": "marginal",
+      "start": {
+        "label": "初始状态",
+        "day": 0,
+        "budget": 220,
+        "sorties": 4,
+        "traps": 12,
+        "spray": 12,
+        "infectedRatio": 0.1,
+        "avgPest": 3.005813375531164,
+        "avgBenefit": 100,
+        "avgHealth": 100,
+        "hotspots": 3
+      },
+      "trigger": {
+        "label": "恢复触发点（感染≥25%）",
+        "day": 19.146446,
+        "budget": 4,
+        "sorties": 4,
+        "traps": 0,
+        "spray": 8,
+        "infectedRatio": 0.2571428571428571,
+        "avgPest": 8.013020203253456,
+        "avgBenefit": 83.95402154946865,
+        "avgHealth": 98.90624145305448,
+        "hotspots": 4
+      },
+      "end": {
+        "label": "第 21 天",
+        "day": 21.000672,
+        "budget": 4,
+        "sorties": 4,
+        "traps": 0,
+        "spray": 8,
+        "infectedRatio": 0.4,
+        "avgPest": 9.25319006191748,
+        "avgBenefit": 84.47614356630241,
+        "avgHealth": 98.58058716842902,
+        "hotspots": 4
+      },
+      "events": 33
+    },
+    "failure": {
+      "label": "失败（几乎不干预）",
+      "actions": [],
+      "result": "fail",
+      "start": {
+        "label": "初始状态",
+        "day": 0,
+        "budget": 220,
+        "sorties": 4,
+        "traps": 12,
+        "spray": 12,
+        "infectedRatio": 0.1,
+        "avgPest": 3.005813375531164,
+        "avgBenefit": 100,
+        "avgHealth": 100,
+        "hotspots": 3
+      },
+      "trigger": {
+        "label": "恢复触发点（感染≥25%）",
+        "day": 8.614859,
+        "budget": 220,
+        "sorties": 4,
+        "traps": 12,
+        "spray": 12,
+        "infectedRatio": 0.2571428571428571,
+        "avgPest": 11.383170529258676,
+        "avgBenefit": 100,
+        "avgHealth": 98.7600859033417,
+        "hotspots": 7
+      },
+      "end": {
+        "label": "第 21 天",
+        "day": 21.000672,
+        "budget": 220,
+        "sorties": 4,
+        "traps": 12,
+        "spray": 12,
+        "infectedRatio": 0.5857142857142857,
+        "avgPest": 36.75031775682542,
+        "avgBenefit": 100,
+        "avgHealth": 93.6124147502513,
+        "hotspots": 25
+      },
+      "events": 169
+    }
+  },
+  "recovery": {
+    "precision": {
+      "label": "精准恢复（局部喷药+诱捕器）",
+      "triggerDay": 8.614859,
+      "threshold": "感染面积≥25%",
+      "extraSpend": 144,
+      "sprayUsed": 10,
+      "trapsLaid": 3,
+      "result": "success",
+      "end": {
+        "label": "恢复后第 21 天",
+        "day": 21.000672,
+        "budget": 76,
+        "sorties": 4,
+        "traps": 9,
+        "spray": 2,
+        "infectedRatio": 0.15714285714285714,
+        "avgPest": 3.396608438505316,
+        "avgBenefit": 66.11443018921167,
+        "avgHealth": 98.77508777396211,
+        "hotspots": 0
+      }
+    },
+    "broad": {
+      "label": "广域恢复（大面积喷药）",
+      "triggerDay": 8.614859,
+      "threshold": "感染面积≥25%",
+      "extraSpend": 108,
+      "sprayUsed": 6,
+      "trapsLaid": 0,
+      "result": "fail",
+      "end": {
+        "label": "恢复后第 21 天",
+        "day": 21.000672,
+        "budget": 112,
+        "sorties": 4,
+        "traps": 12,
+        "spray": 6,
+        "infectedRatio": 0.07142857142857142,
+        "avgPest": 2.0801358269898382,
+        "avgBenefit": 33.485021732033424,
+        "avgHealth": 98.38101980278437,
+        "hotspots": 0
+      }
+    },
+    "triggerSnapshot": {
+      "label": "恢复触发点",
+      "day": 8.614859,
+      "budget": 220,
+      "sorties": 4,
+      "traps": 12,
+      "spray": 12,
+      "infectedRatio": 0.2571428571428571,
+      "avgPest": 11.383170529258676,
+      "avgBenefit": 100,
+      "avgHealth": 98.7600859033417,
+      "hotspots": 7
+    }
+  }
+}
