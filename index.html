@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>切点 · 字幕与节拍时间线</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffb454'/%3E%3Cpath d='M20 18h25v8H30v8h12v8H30v8H20z' fill='%2319140b'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./vendor/noto-sans-sc/index.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">CUT</span>
+          <div>
+            <strong>切点</strong>
+            <small>字幕 · 画面 · 声音共用一条时间线</small>
+          </div>
+        </div>
+        <label class="project-name-wrap">
+          <span>工程</span>
+          <input id="projectName" class="project-name" value="" aria-label="工程名称" />
+        </label>
+        <div class="top-actions">
+          <span id="saveState" class="save-state">未保存</span>
+          <button id="restoreBtn" class="btn btn-quiet" title="恢复本地保存的工程">重新载入</button>
+          <button id="openProjectBtn" class="btn btn-quiet">打开工程</button>
+          <button id="saveProjectBtn" class="btn btn-secondary">保存工程</button>
+          <button id="exportBtn" class="btn btn-primary">导出 WebVTT</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="preview-panel" aria-label="画面预览">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">PROGRAM MONITOR</span>
+              <h1>画面预览</h1>
+            </div>
+            <div id="sceneTabs" class="scene-tabs" role="tablist" aria-label="场景切换"></div>
+          </div>
+
+          <div class="stage-frame">
+            <canvas id="stageCanvas" aria-label="节目画面"></canvas>
+            <div id="subtitleOverlay" class="subtitle-overlay" aria-live="polite">
+              <span id="subtitleLine" class="subtitle-line"></span>
+            </div>
+            <div id="transitionBadge" class="transition-badge" hidden>转场</div>
+            <div class="safe-area" aria-hidden="true"></div>
+          </div>
+
+          <div class="transport" aria-label="播放控制">
+            <div class="transport-main">
+              <button id="toStartBtn" class="icon-btn" aria-label="回到开头" title="回到开头">↤</button>
+              <button id="playBtn" class="play-btn" aria-label="播放" title="播放 / 暂停（空格）">▶</button>
+              <button id="stopBtn" class="icon-btn" aria-label="停止" title="停止">■</button>
+              <button id="loopBtn" class="icon-btn toggle-btn" aria-pressed="false" title="循环播放">⟳</button>
+            </div>
+            <div class="time-readout">
+              <span id="currentTime">00:00.000</span>
+              <span class="time-divider">/</span>
+              <span id="totalDuration">00:00.000</span>
+            </div>
+            <div class="transport-meta">
+              <span id="clockSource" class="pill">AudioContext 主时钟</span>
+              <span id="audioEvent" class="pill pill-accent">等待播放</span>
+            </div>
+          </div>
+        </section>
+
+        <aside class="inspector">
+          <div class="inspector-section subtitle-editor">
+            <div class="section-title">
+              <div>
+                <span class="eyebrow">SUBTITLE</span>
+                <h2>字幕检查器</h2>
+              </div>
+              <span id="cueCount" class="count-badge">0 条</span>
+            </div>
+            <div id="emptySelection" class="empty-state">
+              <strong>没有选中字幕</strong>
+              <span>播放头移动时会自动选中当前字幕。</span>
+              <button id="emptyAddBtn" class="btn btn-secondary">在播放头新增</button>
+            </div>
+            <form id="cueForm" class="cue-form" hidden>
+              <div class="field-row">
+                <label class="field">
+                  <span>入点 <em>IN</em></span>
+                  <input id="cueStart" type="number" min="0" step="0.01" required />
+                </label>
+                <label class="field">
+                  <span>出点 <em>OUT</em></span>
+                  <input id="cueEnd" type="number" min="0" step="0.01" required />
+                </label>
+              </div>
+              <label class="field">
+                <span>字幕文本 <em>支持多行</em></span>
+                <textarea id="cueText" rows="4" placeholder="输入字幕，可换行…"></textarea>
+              </label>
+              <div class="inline-actions">
+                <button id="splitCueBtn" type="button" class="btn btn-quiet">在播放头分割</button>
+                <button id="duplicateCueBtn" type="button" class="btn btn-quiet">复制</button>
+                <button id="deleteCueBtn" type="button" class="btn btn-danger">删除</button>
+              </div>
+            </form>
+            <div id="cueError" class="validation-message" role="alert"></div>
+          </div>
+
+          <div class="inspector-section">
+            <div class="section-title">
+              <div>
+                <span class="eyebrow">SCENE & AUDIO</span>
+                <h2>场景与节拍</h2>
+              </div>
+              <span id="sceneBadge" class="count-badge">—</span>
+            </div>
+            <div class="stat-grid">
+              <div class="stat"><span>总时长</span><strong id="durationStat">20.00s</strong></div>
+              <div class="stat"><span>关键帧</span><strong id="keyframeStat">0</strong></div>
+              <div class="stat"><span>转场</span><strong id="transitionStat">—</strong></div>
+            </div>
+            <div class="field-row">
+              <label class="field">
+                <span>BPM</span>
+                <input id="bpmInput" type="number" min="40" max="240" step="1" />
+              </label>
+              <label class="field">
+                <span>音频起始 <em>s</em></span>
+                <input id="audioStartInput" type="number" min="0" step="0.01" />
+              </label>
+            </div>
+            <label class="field">
+              <span>视频总时长 <em>s</em></span>
+              <input id="durationInput" type="number" min="1" step="0.01" />
+            </label>
+            <p class="hint">节拍、字幕和画面全部从同一个 transport 时钟取样。修改总时长或音频起点后，保存前会重新校验。</p>
+            <button id="downloadProjectBtn" class="btn btn-quiet btn-wide">下载工程 JSON</button>
+          </div>
+
+          <div class="inspector-section">
+            <div class="section-title">
+              <div>
+                <span class="eyebrow">SYSTEM CHECK</span>
+                <h2>一致性验证</h2>
+              </div>
+            </div>
+            <div id="verificationList" class="verification-list">
+              <div><span class="check-dot"></span>共享时钟</div>
+              <div><span class="check-dot"></span>导出时码</div>
+              <div><span class="check-dot"></span>工程恢复</div>
+            </div>
+            <button id="runVerificationBtn" class="btn btn-secondary btn-wide">运行完整验证</button>
+            <p id="verificationResult" class="hint">将验证暂停帧/回放帧、音频事件、VTT 时码和工程往返。</p>
+          </div>
+        </aside>
+      </main>
+
+      <section class="timeline-panel" aria-label="时间线">
+        <div class="timeline-toolbar">
+          <div class="timeline-title">
+            <span class="eyebrow">TIMELINE</span>
+            <h2>多行字幕时间线</h2>
+          </div>
+          <div class="timeline-tools">
+            <button id="addCueBtn" class="btn btn-secondary">＋ 新增字幕</button>
+            <button id="splitAtPlayheadBtn" class="btn btn-quiet">✂ 分割</button>
+            <button id="importSubtitlesBtn" class="btn btn-quiet">导入旧字幕</button>
+            <button id="loadLegacySampleBtn" class="btn btn-quiet">载入旧字幕示例</button>
+            <label class="zoom-control">
+              <span>缩放</span>
+              <input id="zoomInput" type="range" min="1" max="3" step="0.25" value="1.4" />
+            </label>
+          </div>
+        </div>
+        <div id="timelineScroller" class="timeline-scroller">
+          <div id="timelineContent" class="timeline-content">
+            <canvas id="timelineCanvas"></canvas>
+            <div id="cueLayer" class="cue-layer"></div>
+            <div id="playhead" class="playhead"><span></span></div>
+          </div>
+        </div>
+        <div class="timeline-footer">
+          <div class="legend">
+            <span><i class="legend-swatch cue-swatch"></i>字幕</span>
+            <span><i class="legend-swatch audio-swatch"></i>合成节拍波形</span>
+            <span><i class="legend-swatch scene-swatch"></i>场景 / 转场</span>
+          </div>
+          <span id="timelineStatus">拖动字幕移动，拖动两端调整入点/出点。</span>
+        </div>
+      </section>
+    </div>
+
+    <input id="importSubtitlesInput" type="file" accept=".vtt,.srt,text/vtt,text/plain" hidden />
+    <input id="openProjectInput" type="file" accept=".json,application/json" hidden />
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

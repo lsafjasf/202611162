@@ -1,0 +1,15 @@
+{
+  "name": "cutline-subtitle-timeline",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A deterministic multi-row subtitle, scene and synthesized-audio timeline.",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node tests/e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.65.1",
+    "pngjs": "7.0.0"
+  }
+}
