@@ -1,0 +1,27 @@
+{
+  "name": "uid667",
+  "version": "1.0.0",
+  "description": "装箱产线数字孪生：配方选择、设备时序、异常恢复与批次对比。",
+  "main": "index.html",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "start": "python3 -m http.server 4173",
+    "test:e2e": "node tests/e2e.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lsafjasf/202611162.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/lsafjasf/202611162/issues"
+  },
+  "homepage": "https://github.com/lsafjasf/202611162#readme",
+  "devDependencies": {
+    "playwright": "^1.65.1"
+  },
+  "private": "true"
+}

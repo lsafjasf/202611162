@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="装箱产线数字孪生：配方选择、设备时序、异常恢复与批次对比。">
+  <title>PACK/FLOW · 智能装箱产线</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="PACK FLOW 首页">
+      <span class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </span>
+      <span class="brand-copy">
+        <strong>PACK<span>/</span>FLOW</strong>
+        <small>装箱线数字孪生 · LINE 07</small>
+      </span>
+    </a>
+
+    <div class="batch-identity">
+      <span class="live-dot"></span>
+      <span id="batch-label">BATCH 001</span>
+      <span class="batch-separator"></span>
+      <span id="clock-label">--:--:--</span>
+    </div>
+
+    <nav class="top-actions" aria-label="产线操作">
+      <button class="icon-button" id="sound-button" type="button" title="开启声音" aria-label="开启声音">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path class="sound-wave" d="M16 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        <span class="sr-only">声音</span>
+      </button>
+      <button class="button button-quiet" id="pause-button" type="button" disabled>
+        <span class="button-icon pause-icon"></span>
+        <span class="button-text">暂停检查</span>
+      </button>
+      <button class="button button-quiet" id="reset-button" type="button">
+        重置批次
+      </button>
+      <button class="button button-accent" id="snapshot-button" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 4v6h8V4M8 20v-6h8v6"/></svg>
+        保存快照
+      </button>
+      <button class="button button-quiet" id="validation-jump" type="button">验收 0 / 3</button>
+      <button class="icon-button history-button" id="history-button" type="button" title="批次记录" aria-label="批次记录">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3 2M4.5 9A8 8 0 1 1 4 14M4 5v5h5"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main class="workspace">
+    <section class="production-column">
+      <article class="stage-card">
+        <div class="stage-meta">
+          <div class="stage-title">
+            <span class="eyebrow"><span class="live-dot"></span> LIVE DIGITAL TWIN</span>
+            <h1 id="stage-heading">等待批次启动</h1>
+          </div>
+          <div class="stage-metrics" aria-label="实时产线指标">
+            <div>
+              <span>当前节拍</span>
+              <strong id="cycle-metric">--<small>s</small></strong>
+            </div>
+            <div>
+              <span>良品率</span>
+              <strong id="yield-metric">--<small>%</small></strong>
+            </div>
+            <div>
+              <span>实时功耗</span>
+              <strong id="power-metric">0.6<small>kW</small></strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-shell" id="canvas-shell">
+          <canvas id="line-canvas" aria-label="装箱产线实时画布"></canvas>
+          <div class="scan-overlay" aria-hidden="true"></div>
+          <div class="canvas-grain" aria-hidden="true"></div>
+
+          <div class="canvas-tag tag-line">LINE 07 <b>·</b> 华东一厂</div>
+          <div class="canvas-tag tag-order">
+            <span id="canvas-order-id">NO ORDER</span>
+            <strong id="canvas-order-progress">00 / 08</strong>
+          </div>
+
+          <div class="angle-readout" aria-hidden="true">
+            <span>ARM θ</span>
+            <b id="arm-angle">+0.0°</b>
+            <i></i>
+          </div>
+
+          <div class="device-pills" id="device-pills" aria-label="设备状态">
+            <span class="device-pill" data-device="roboticArm"><i></i>ARM-01</span>
+            <span class="device-pill" data-device="sealer"><i></i>SEAL-02</span>
+            <span class="device-pill" data-device="bufferDispenser"><i></i>BUF-01</span>
+          </div>
+
+          <div class="stage-pause-flag" id="pause-flag" hidden>
+            <span></span>
+            <strong>PAUSED</strong>
+            <small>设备已停止 · 可安全检查</small>
+          </div>
+
+          <div class="fault-panel" id="fault-panel" hidden>
+            <div class="fault-symbol">!</div>
+            <div class="fault-copy">
+              <span class="eyebrow">INTERLOCK STOP · 安全联锁</span>
+              <h2 id="fault-title">设备故障</h2>
+              <p id="fault-detail">等待诊断信息</p>
+              <div class="fault-data">
+                <span>触发设备 <b id="fault-equipment">--</b></span>
+                <span>触发值 <b id="fault-value">--</b></span>
+              </div>
+              <div class="fault-actions">
+                <button class="button button-danger" id="recover-button" type="button">执行复位</button>
+                <span id="recovery-hint">确认安全后复位并复检 3.0s</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="canvas-footer">
+            <div class="phase-track">
+              <span class="phase-caption">工序</span>
+              <div class="phase-steps" id="phase-steps">
+                <span data-phase="scan">扫码</span>
+                <span data-phase="feed">入箱</span>
+                <span data-phase="buffer">缓冲</span>
+                <span data-phase="seal">封口</span>
+                <span data-phase="eject">下线</span>
+              </div>
+            </div>
+            <div class="power-spark">
+              <span>POWER</span>
+              <canvas id="power-canvas" width="220" height="36" aria-hidden="true"></canvas>
+              <b id="power-footer">0.6 kW</b>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <div class="dashboard-grid">
+        <article class="panel kpi-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="section-no">01</span>
+              <h2>批次脉搏</h2>
+            </div>
+            <span class="status-chip" id="batch-status-chip">待机</span>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi">
+              <span>良品</span>
+              <strong id="good-count">00</strong>
+              <small>/ 08 箱</small>
+            </div>
+            <div class="kpi">
+              <span>废品</span>
+              <strong id="waste-count">00</strong>
+              <small>待判定</small>
+            </div>
+            <div class="kpi">
+              <span>峰值功耗</span>
+              <strong id="peak-power">0.6<em>kW</em></strong>
+              <small>实时采样</small>
+            </div>
+            <div class="kpi">
+              <span>异常处理</span>
+              <strong id="exception-count">00</strong>
+              <small>已闭环</small>
+            </div>
+          </div>
+          <div class="batch-progress">
+            <div class="progress-labels">
+              <span id="progress-copy">尚未装载订单</span>
+              <b id="progress-value">0%</b>
+            </div>
+            <div class="progress-rail"><span id="progress-fill"></span></div>
+          </div>
+        </article>
+
+        <article class="panel log-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="section-no">02</span>
+              <h2>事件记录</h2>
+            </div>
+            <div class="tab-switch" role="tablist" aria-label="事件记录类型">
+              <button class="active" id="tab-device" role="tab" aria-selected="true" type="button">设备时序</button>
+              <button id="tab-exception" role="tab" aria-selected="false" type="button">异常处理 <sup id="exception-badge">0</sup></button>
+            </div>
+          </div>
+          <div class="log-body" id="device-log" role="tabpanel"></div>
+          <div class="log-body" id="exception-log" role="tabpanel" hidden></div>
+        </article>
+      </div>
+    </section>
+
+    <aside class="control-column">
+      <article class="panel order-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="section-no">03</span>
+            <h2>今日订单</h2>
+          </div>
+          <div class="order-summary">
+            <span><b id="orders-done">0</b>/8</span>
+            <button class="text-button" id="recommend-button" type="button">智能配单</button>
+          </div>
+        </div>
+        <div class="order-list" id="order-list"></div>
+      </article>
+
+      <article class="panel config-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="section-no">04</span>
+            <h2>装箱配方</h2>
+          </div>
+          <span class="recipe-target" id="recipe-target">选择订单</span>
+        </div>
+
+        <div class="selected-product" id="selected-product">
+          <div class="product-glyph" id="product-glyph">
+            <span></span><span></span><span></span>
+          </div>
+          <div>
+            <span id="selected-order-id">ORD-000</span>
+            <strong id="selected-product-name">请选择订单</strong>
+            <small id="selected-product-spec">尺寸 -- × -- × -- mm</small>
+          </div>
+          <span class="fragility-tag" id="fragility-tag">--</span>
+        </div>
+
+        <fieldset class="control-group" id="box-control">
+          <legend>纸箱规格 <span>内部尺寸</span></legend>
+          <div class="option-grid box-grid" id="box-options"></div>
+        </fieldset>
+
+        <fieldset class="control-group" id="buffer-control">
+          <legend>缓冲材料 <span>接触面防护</span></legend>
+          <div class="option-grid buffer-grid" id="buffer-options"></div>
+        </fieldset>
+
+        <fieldset class="control-group" id="tape-control">
+          <legend>胶带路径 <span>封口强度</span></legend>
+          <div class="option-grid tape-grid" id="tape-options"></div>
+        </fieldset>
+
+        <div class="offset-control">
+          <div class="offset-heading">
+            <label for="offset-range">机械臂放置偏置</label>
+            <output id="offset-output" for="offset-range">+0 mm</output>
+          </div>
+          <input id="offset-range" type="range" min="-30" max="30" step="1" value="0">
+          <div class="offset-scale"><span>-30</span><span class="safe-zone">安全 ±18</span><span>+30</span></div>
+        </div>
+
+        <div class="fit-readout" id="fit-readout">
+          <div class="fit-head">
+            <span>配方预检</span>
+            <b id="fit-status">等待订单</b>
+          </div>
+          <div class="fit-bars">
+            <div><span>空间</span><i><b id="fit-space-bar"></b></i><em id="fit-space">--</em></div>
+            <div><span>防护</span><i><b id="fit-cushion-bar"></b></i><em id="fit-cushion">--</em></div>
+            <div><span>封口</span><i><b id="fit-seal-bar"></b></i><em id="fit-seal">--</em></div>
+          </div>
+        </div>
+
+        <div class="config-actions">
+          <button class="button button-primary" id="start-button" type="button">
+            <span class="play-icon"></span>
+            <span id="start-label">启动批次</span>
+          </button>
+          <button class="button button-outline" id="apply-button" type="button">写入当前订单</button>
+        </div>
+      </article>
+
+      <article class="panel validation-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="section-no">05</span>
+            <h2>验收实验室</h2>
+          </div>
+          <span class="status-chip neutral" id="validation-chip">0 / 3</span>
+        </div>
+        <div class="validation-list" id="validation-list">
+          <button class="validation-row" data-scenario="normal" type="button">
+            <span class="validation-index">A</span>
+            <span><strong>正常生产</strong><small>8 箱全检通过</small></span>
+            <i class="validation-state">未执行</i>
+          </button>
+          <button class="validation-row" data-scenario="fault" type="button">
+            <span class="validation-index">B</span>
+            <span><strong>设备故障</strong><small>封口器联锁 + 恢复复检</small></span>
+            <i class="validation-state">未执行</i>
+          </button>
+          <button class="validation-row" data-scenario="limit" type="button">
+            <span class="validation-index">C</span>
+            <span><strong>参数越限</strong><small>机械臂偏置触发值</small></span>
+            <i class="validation-state">未执行</i>
+          </button>
+        </div>
+        <div class="snapshot-strip" id="snapshot-strip">
+          <div class="snapshot-empty" id="snapshot-empty">
+            <span>NO SNAPSHOT</span>
+            <small>完成批次后保存设备快照，可修改参数复跑。</small>
+          </div>
+          <div class="snapshot-saved" id="snapshot-saved" hidden>
+            <div class="snapshot-head">
+              <span class="snapshot-dot"></span>
+              <strong id="snapshot-name">SNAP-001</strong>
+              <small id="snapshot-time">--:--</small>
+            </div>
+            <div class="snapshot-meta" id="snapshot-meta">设备状态已冻结</div>
+            <div class="snapshot-actions">
+              <button class="text-button" id="rerun-snapshot" type="button">载入参数</button>
+              <button class="text-button" id="compare-button" type="button" disabled>并排比较</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </aside>
+  </main>
+
+  <dialog class="modal report-modal" id="report-dialog">
+    <div class="modal-shell">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">PRODUCTION REPORT · 只读</span>
+          <h2 id="report-title">批次报告</h2>
+        </div>
+        <button class="modal-close" type="button" data-close="report-dialog" aria-label="关闭">×</button>
+      </div>
+      <div class="report-kpis" id="report-kpis"></div>
+      <div class="report-section">
+        <div class="report-section-head">
+          <h3>订单判定</h3>
+          <span id="report-freeze-note">数据已冻结 · 不可修改</span>
+        </div>
+        <div class="report-orders" id="report-orders"></div>
+      </div>
+      <div class="report-section report-lower">
+        <div>
+          <h3>停机原因</h3>
+          <div class="reason-list" id="report-reasons"></div>
+        </div>
+        <div>
+          <h3>异常闭环</h3>
+          <div class="reason-list" id="report-exceptions"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="button button-outline" type="button" data-close="report-dialog">关闭报告</button>
+        <button class="button button-primary" id="report-snapshot-button" type="button">保存此批设备快照</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal compare-modal" id="compare-dialog">
+    <div class="modal-shell modal-shell-wide">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">BATCH DIFF · 只读比较</span>
+          <h2>批次并排比较</h2>
+        </div>
+        <button class="modal-close" type="button" data-close="compare-dialog" aria-label="关闭">×</button>
+      </div>
+      <div class="compare-grid" id="compare-grid"></div>
+      <div class="modal-actions">
+        <span class="compare-note">已完成批次为不可变副本，比较不会回写原始数据。</span>
+        <button class="button button-outline" type="button" data-close="compare-dialog">关闭</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal history-modal" id="history-dialog">
+    <div class="modal-shell modal-shell-wide">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">BATCH ARCHIVE · 只读</span>
+          <h2>批次档案</h2>
+        </div>
+        <button class="modal-close" type="button" data-close="history-dialog" aria-label="关闭">×</button>
+      </div>
+      <div class="history-list" id="history-list"></div>
+    </div>
+  </dialog>
+
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
