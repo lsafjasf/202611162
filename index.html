@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Lumen Pixel Engine — procedural Canvas grading and deterministic export"
+    />
+    <title>Lumen Pixel Engine</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121710'/%3E%3Cpath d='M9 12h14M9 16h10M9 20h12' stroke='%23e9ff62' stroke-width='2'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="brand-copy">
+            <strong>LUMEN</strong>
+            <small>PIXEL ENGINE / 01</small>
+          </span>
+        </div>
+
+        <div class="project-chip">
+          <span class="project-dot"></span>
+          <span>
+            <small>ACTIVE COMPOSITION</small>
+            <strong>Solar Survey</strong>
+          </span>
+          <span class="project-seed" id="seedLabel">SEED 8421</span>
+        </div>
+
+        <div class="top-actions">
+          <button class="icon-button" id="undoButton" title="Undo last change (Ctrl+Z)" disabled>
+            <span class="button-glyph">↶</span>
+            <span>Undo</span>
+          </button>
+          <button class="icon-button" id="screenshotButton" title="Download the current preview frame">
+            <span class="button-glyph">⌗</span>
+            <span>Shot</span>
+          </button>
+          <button class="icon-button" id="resetViewButton" title="Reset zoom and rotation">
+            <span class="button-glyph">◎</span>
+            <span>Fit</span>
+          </button>
+          <button class="primary-button" id="exportButton">
+            <span class="export-icon" aria-hidden="true">↓</span>
+            Export PNG
+          </button>
+        </div>
+      </header>
+
+      <main class="studio">
+        <aside class="panel left-panel">
+          <section class="panel-section scene-section">
+            <div class="section-heading">
+              <div>
+                <span class="eyebrow">SCENE GEOMETRY</span>
+                <h2>Composition</h2>
+              </div>
+              <span class="count-badge" id="objectCountBadge">4</span>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label">
+                <label for="zoomSlider">Viewport zoom</label>
+                <output id="zoomValue">100%</output>
+              </div>
+              <input id="zoomSlider" class="range-input" type="range" min="60" max="180" value="100" step="1" />
+              <div class="range-scale"><span>60</span><span>180</span></div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label">
+                <label for="rotationSlider">Scene rotation</label>
+                <output id="rotationValue">0°</output>
+              </div>
+              <input id="rotationSlider" class="range-input" type="range" min="-30" max="30" value="0" step="1" />
+              <div class="range-scale"><span>−30°</span><span>+30°</span></div>
+            </div>
+
+            <div class="subheading">
+              <span>Object stack</span>
+              <span class="mono-note">Z 20—80</span>
+            </div>
+            <div class="object-list" id="objectList" aria-label="Scene objects"></div>
+          </section>
+
+          <section class="panel-section geometry-readout">
+            <div class="section-heading compact">
+              <div>
+                <span class="eyebrow">LIVE DIAGNOSTICS</span>
+                <h2>Geometry lock</h2>
+              </div>
+              <span class="live-badge"><i></i> LIVE</span>
+            </div>
+            <dl class="metric-grid">
+              <div><dt>Objects</dt><dd id="metricObjects">4</dd></div>
+              <div><dt>Annotations</dt><dd id="metricAnnotations">4</dd></div>
+              <div><dt>Occlusion</dt><dd id="metricOcclusion">STABLE</dd></div>
+              <div><dt>Anchor drift</dt><dd id="metricDrift">0.00 px</dd></div>
+            </dl>
+            <div class="geometry-hash">
+              <span>GEOMETRY DIGEST</span>
+              <code id="geometryDigest">········</code>
+            </div>
+          </section>
+        </aside>
+
+        <section class="viewport" aria-label="Canvas preview">
+          <div class="stage-toolbar">
+            <div class="stage-title">
+              <span class="stage-index">01</span>
+              <span>
+                <small>COMPOSITE VIEW</small>
+                <strong>Procedural solar field</strong>
+              </span>
+            </div>
+            <div class="stage-meta">
+              <label class="resolution-wrap" title="Preview and export dimensions">
+                <span class="sr-only">Output dimensions</span>
+                <select id="resolutionSelect" class="resolution-select">
+                  <option value="1024x768">1024 × 768</option>
+                  <option value="1440x1080">1440 × 1080</option>
+                  <option value="2048x1536">2048 × 1536</option>
+                </select>
+              </label>
+              <span class="meta-divider"></span>
+              <span>RGB / 8-BIT</span>
+              <span class="meta-divider"></span>
+              <span id="renderMode">PIXEL LOOP</span>
+            </div>
+          </div>
+
+          <div class="canvas-frame" id="canvasFrame">
+            <div class="canvas-grid" aria-hidden="true"></div>
+            <canvas
+              id="previewCanvas"
+              width="1024"
+              height="768"
+              aria-label="Procedurally generated solar survey scene"
+            ></canvas>
+            <div class="corner-mark top-left" aria-hidden="true"></div>
+            <div class="corner-mark top-right" aria-hidden="true"></div>
+            <div class="corner-mark bottom-left" aria-hidden="true"></div>
+            <div class="corner-mark bottom-right" aria-hidden="true"></div>
+
+            <div class="canvas-hud hud-top">
+              <span class="hud-pill"><i></i> GENERATED / NO SOURCE IMAGE</span>
+              <span class="hud-pill" id="frameCounter">FRAME 0000</span>
+            </div>
+            <div class="canvas-hud hud-bottom">
+              <span id="pipelineSummary">LEVELS → BLUR → NOISE → TONE</span>
+              <span id="previewScaleLabel">100%</span>
+            </div>
+
+            <div class="progress-panel" id="progressPanel" hidden>
+              <div class="progress-heading">
+                <span id="progressStage">PROCESSING PIXELS</span>
+                <strong id="progressValue">0%</strong>
+              </div>
+              <div class="progress-track"><i id="progressBar"></i></div>
+              <span class="progress-detail" id="progressDetail">Initializing decode buffer</span>
+            </div>
+
+            <div class="error-panel" id="errorPanel" hidden role="alert">
+              <span class="error-code">ERR / INVALID PIPELINE</span>
+              <h3 id="errorTitle">Invalid parameters</h3>
+              <p id="errorMessage">Check the node values and try again.</p>
+              <button class="secondary-button" id="dismissErrorButton">Keep last frame</button>
+            </div>
+          </div>
+
+          <div class="transport">
+            <div class="transport-left">
+              <button class="transport-button" id="pauseButton" aria-pressed="false">
+                <span id="pauseIcon">Ⅱ</span>
+                <span id="pauseLabel">Pause motion</span>
+              </button>
+              <span class="transport-divider"></span>
+              <div class="timecode">
+                <span>TC</span>
+                <code id="timecode">00:00.000</code>
+              </div>
+            </div>
+            <div class="render-status">
+              <span class="render-indicator" id="renderIndicator"></span>
+              <span id="renderStatus">RENDER READY</span>
+            </div>
+            <div class="transport-right">
+              <span class="tiny-stat">LAST <strong id="lastRenderTime">— ms</strong></span>
+              <span class="transport-divider"></span>
+              <button class="text-button" id="recomputeButton">Recalculate</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel right-panel">
+          <section class="panel-section nodes-section">
+            <div class="section-heading">
+              <div>
+                <span class="eyebrow">PIXEL PIPELINE</span>
+                <h2>Grading nodes</h2>
+              </div>
+              <span class="count-badge" id="nodeCountBadge">4</span>
+            </div>
+            <p class="section-intro">
+              Order is the result. Every node runs point-by-point in the Canvas buffer.
+            </p>
+            <div class="node-stack" id="nodeStack" aria-label="Image processing node stack"></div>
+            <div class="add-node-wrap">
+              <button class="add-node-button" id="addNodeButton" aria-expanded="false">
+                <span>＋</span> Add node
+              </button>
+              <div class="node-palette" id="nodePalette" hidden>
+                <button data-add-type="levels"><i class="swatch levels"></i>Levels</button>
+                <button data-add-type="blur"><i class="swatch blur"></i>Blur</button>
+                <button data-add-type="noise"><i class="swatch noise"></i>Noise</button>
+                <button data-add-type="tone"><i class="swatch tone"></i>Tone map</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel-section preset-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="eyebrow">LOOK LIBRARY</span>
+                <h2>Presets</h2>
+              </div>
+              <span class="saved-badge" id="presetSavedBadge">LOCAL</span>
+            </div>
+            <label class="field-label" for="presetSelect">Saved parameter sets</label>
+            <select id="presetSelect" class="select-input">
+              <option value="">Choose a saved preset…</option>
+            </select>
+            <div class="preset-row">
+              <input
+                id="presetNameInput"
+                class="text-input"
+                type="text"
+                maxlength="40"
+                placeholder="Preset name"
+                value="Solar grade 01"
+              />
+              <button class="secondary-button save-button" id="savePresetButton">Save</button>
+            </div>
+            <div class="preset-footer">
+              <span id="presetHint">Presets stay in this browser</span>
+              <button class="link-button" id="deletePresetButton" disabled>Delete</button>
+            </div>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="statusbar">
+        <div class="status-left">
+          <span><i class="status-dot"></i> ENGINE ONLINE</span>
+          <span class="status-divider"></span>
+          <span>CANVAS 2D / CPU PIXELS</span>
+          <span class="status-divider"></span>
+          <span id="pixelCountLabel">786,432 PX</span>
+        </div>
+        <div class="status-right">
+          <span>PREVIEW <code id="previewHash">········</code></span>
+          <span class="status-divider"></span>
+          <span>EXPORT <code id="exportHash">PENDING</code></span>
+          <span class="status-divider"></span>
+          <span class="match-badge" id="matchBadge">DETERMINISTIC</span>
+        </div>
+      </footer>
+    </div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>
