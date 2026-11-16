@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>海草床修复模拟 · Seagrass Restoration</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>海草床修复区模拟</h1>
+  <div id="clock-bar">
+    <span id="ui-day">第 1 / 30 天</span>
+    <span id="ui-weather">天气:--</span>
+    <span id="ui-stable">稳定连续:0 天</span>
+    <span id="ui-phase">状态:--</span>
+  </div>
+</header>
+
+<main>
+  <section id="left">
+    <canvas id="sea" width="720" height="460"></canvas>
+    <div id="toolbar">
+      <button id="btn-pause">暂停</button>
+      <button id="btn-speed">速度 x1</button>
+      <button id="btn-restart">重开(同 seed)</button>
+      <button id="btn-sound">声音:关</button>
+      <label>seed <input id="seed-input" type="number" value="20261116"></label>
+      <button id="btn-newseed">新 seed 重开</button>
+    </div>
+    <div id="last-op">最近操作:尚无</div>
+  </section>
+
+  <section id="right">
+    <h2>环境指标</h2>
+    <div id="metrics"></div>
+
+    <h2>操作</h2>
+    <div class="ops">
+      <button id="op-stake">打固定桩 (-120 资金)</button>
+      <button id="op-light">调节光照遮棚 (-80 资金)</button>
+      <button id="op-lane">切换航线距离</button>
+    </div>
+
+    <h2>恢复策略(触发阈值见下)</h2>
+    <div class="ops">
+      <button id="op-transplant">策略A 补植移植</button>
+      <button id="op-enclosure">策略B 围网封育</button>
+    </div>
+    <div id="strategy-info"></div>
+
+    <h2>稳态 / 临界 / 失败 对比</h2>
+    <div id="compare"></div>
+
+    <h2>事件日志</h2>
+    <div id="log"></div>
+  </section>
+</main>
+
+<script src="js/rng.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

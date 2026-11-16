@@ -1,0 +1,79 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #06222e;
+  color: #d8eef4;
+}
+header {
+  padding: 10px 16px;
+  background: #0a3142;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+header h1 { font-size: 18px; margin: 0; }
+#clock-bar span { margin-right: 18px; font-size: 14px; color: #9fd8e8; }
+main { display: flex; gap: 12px; padding: 12px; }
+#left { flex: 0 0 740px; }
+#right { flex: 1; min-width: 320px; }
+canvas {
+  background: linear-gradient(#0b4a63, #083144 70%, #0a2a28);
+  border-radius: 8px;
+  display: block;
+  width: 720px;
+  height: 460px;
+}
+#toolbar { margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+button {
+  background: #1178a6;
+  color: #eafaff;
+  border: 1px solid #2aa4d4;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+button:hover { background: #1590c4; }
+button:disabled { background: #33525e; border-color: #456; cursor: not-allowed; }
+#seed-input { width: 90px; background: #0a3142; color: #d8eef4; border: 1px solid #2aa4d4; border-radius: 4px; padding: 4px; }
+#last-op {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #0a3142;
+  border-left: 4px solid #2aa4d4;
+  border-radius: 4px;
+  font-size: 13px;
+  min-height: 34px;
+}
+#last-op.bad { border-left-color: #e05a4e; }
+#last-op.good { border-left-color: #5ec46f; }
+h2 { font-size: 14px; margin: 14px 0 6px; color: #8fd0e2; }
+#metrics table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#metrics td { padding: 3px 6px; border-bottom: 1px solid #11404f; }
+#metrics td.v { text-align: right; font-variant-numeric: tabular-nums; }
+#metrics tr.warn td { color: #f0c05a; }
+#metrics tr.crit td { color: #ef7d6f; }
+.ops { display: flex; flex-direction: column; gap: 6px; }
+#strategy-info, #compare { font-size: 12.5px; line-height: 1.6; color: #b8dde8; }
+#compare .card {
+  background: #0a3142;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+}
+#compare .tag { font-weight: bold; margin-right: 6px; }
+#compare .tag.steady { color: #5ec46f; }
+#compare .tag.critical { color: #f0c05a; }
+#compare .tag.failure { color: #ef7d6f; }
+#log {
+  height: 180px;
+  overflow-y: auto;
+  background: #072836;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+#log .t { color: #6fa9bc; margin-right: 6px; }
