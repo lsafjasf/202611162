@@ -1,0 +1,27 @@
+{
+  "name": "text-on-curve-tool",
+  "version": "1.0.0",
+  "description": "Canvas text-on-curve layout tool with SVG export, undo, presets and deterministic tests",
+  "main": "index.js",
+  "scripts": {
+    "serve": "node scripts/serve.mjs 8080",
+    "test": "node --test tests/engine.test.mjs && node tests/browser.test.mjs",
+    "test:engine": "node --test tests/engine.test.mjs",
+    "test:browser": "node tests/browser.test.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lsafjasf/202611162.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/lsafjasf/202611162/issues"
+  },
+  "homepage": "https://github.com/lsafjasf/202611162#readme",
+  "dependencies": {
+    "puppeteer": "^25.17.0"
+  }
+}

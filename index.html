@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>曲线文字排版工具</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>曲线文字排版工具</h1>
+  <div class="toolbar">
+    <button id="btn-pause">暂停</button>
+    <button id="btn-undo">撤销</button>
+    <button id="btn-redo">重做</button>
+    <button id="btn-save">保存参数</button>
+    <button id="btn-export-json">导出JSON</button>
+    <button id="btn-import-json">导入JSON</button>
+    <button id="btn-export-svg">导出SVG</button>
+    <button id="btn-shot">截图PNG</button>
+    <button id="btn-reset">重置</button>
+  </div>
+</header>
+<main>
+  <aside id="panel">
+    <label>文字
+      <textarea id="in-text" rows="2"></textarea>
+    </label>
+    <label>字号 <input id="in-fontSize" type="number" step="1"></label>
+    <label>字距 <input id="in-letterSpacing" type="number" step="1"></label>
+    <label>基线偏移 <input id="in-baselineOffset" type="number" step="1"></label>
+    <label>半径 <input id="in-radius" type="number" step="10"></label>
+    <label>弧度(°) <input id="in-arcAngle" type="number" step="5"></label>
+    <label>对齐
+      <select id="in-align">
+        <option value="start">起点</option>
+        <option value="center">居中</option>
+        <option value="end">终点</option>
+      </select>
+    </label>
+    <label>动画速度 <input id="in-animSpeed" type="number" step="1"></label>
+    <label>缩放 <input id="in-zoom" type="number" step="0.1"></label>
+    <label>旋转(°) <input id="in-rotation" type="number" step="5"></label>
+    <label>安全区 <input id="in-showSafeArea" type="checkbox"></label>
+    <div class="presets">
+      <select id="preset-list"></select>
+      <button id="btn-load-preset">载入</button>
+      <button id="btn-del-preset">删除</button>
+    </div>
+    <div id="status">
+      <div id="errors" class="errors" hidden></div>
+      <div id="warnings" class="warnings" hidden></div>
+      <div id="hash-line">结构哈希: <code id="scene-hash">-</code></div>
+      <div id="stats-line"></div>
+    </div>
+  </aside>
+  <section id="stage">
+    <canvas id="canvas" width="960" height="600"></canvas>
+  </section>
+</main>
+<input id="file-input" type="file" accept=".json" hidden>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
