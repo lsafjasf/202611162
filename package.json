@@ -1,0 +1,10 @@
+{
+  "name": "doppler-rail",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Real-time Web Audio train pass-by acoustic lab",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs"
+  }
+}

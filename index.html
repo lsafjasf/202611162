@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071015">
+  <title>Doppler Rail — 实时声轨合成器</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23071015'/%3E%3Cpath d='M6 21h3V11H6zm6 4h3V7h-3zm6-4h3V11h-3zm6 4h3V7h-3z' fill='%236ef3ce'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i>
+        </span>
+        <span class="brand-copy">
+          <strong>DOPPLER RAIL</strong>
+          <small>实时声轨合成 / ACOUSTIC LAB</small>
+        </span>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-pill"><i class="dot live-dot"></i><span id="engineLabel">音频待启动</span></span>
+        <span class="meta-pill mono" id="sampleRateLabel">44.1 kHz</span>
+        <span class="meta-clock mono" id="clockLabel">00:00.000</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="stage-card" aria-label="列车声学舞台">
+        <div class="stage-head">
+          <div>
+            <p class="eyebrow">PASS-BY MONITOR / CH 01</p>
+            <h1>声源掠过监听点</h1>
+          </div>
+          <div class="stage-head-right">
+            <span class="phase-chip" id="phaseChip">APPROACH</span>
+            <span class="pass-chip" id="passChip">PAN FLIP STANDBY</span>
+          </div>
+        </div>
+
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="sceneCanvas" aria-label="轨道、列车与实时频谱"></canvas>
+          <div class="canvas-tag tag-left">WORLD / 110 m</div>
+          <div class="canvas-tag tag-right">STEREO / LIVE FFT</div>
+          <div class="start-veil" id="startVeil">
+            <button class="start-button" id="startButton" type="button">
+              <span class="start-icon">▶</span>
+              <span><strong>启动实时声轨</strong><small>所有声音由 Web Audio 现场合成</small></span>
+            </button>
+          </div>
+          <div class="pause-veil is-hidden" id="pauseVeil">
+            <span class="pause-glyph">Ⅱ</span>
+            <strong>声音与时间已冻结</strong>
+            <small>音频时钟暂停，继续后从同一采样恢复</small>
+          </div>
+        </div>
+
+        <div class="transport">
+          <div class="transport-buttons">
+            <button class="btn btn-primary" id="playBtn" type="button">
+              <span class="btn-icon" id="playIcon">▶</span><span id="playText">播放</span>
+            </button>
+            <button class="btn" id="replayBtn" type="button">
+              <span class="btn-icon">↺</span>重播
+            </button>
+            <button class="btn btn-ghost" id="resetBtn" type="button">参数重置</button>
+          </div>
+          <div class="transport-time">
+            <span class="mono" id="timecode">00:00.000</span>
+            <span class="time-rule"><i id="timeProgress"></i></span>
+            <span class="mono dim">09.000</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="console" aria-label="驾驶台">
+        <div class="console-head">
+          <div>
+            <p class="eyebrow">CONTROL DESK</p>
+            <h2>声学驾驶台</h2>
+          </div>
+          <span class="console-index mono">01—03</span>
+        </div>
+
+        <div class="control-stack">
+          <label class="control" for="speedInput">
+            <span class="control-top">
+              <span><b>01</b> 声源速度</span>
+              <output id="speedValue" for="speedInput">92 <small>km/h</small></output>
+            </span>
+            <input id="speedInput" type="range" min="50" max="140" step="1" value="92">
+            <span class="range-labels"><span>50</span><span>音高 / 节拍</span><span>140</span></span>
+          </label>
+
+          <label class="control" for="gaugeInput">
+            <span class="control-top">
+              <span><b>02</b> 轨距</span>
+              <output id="gaugeValue" for="gaugeInput">1.435 <small>m</small></output>
+            </span>
+            <input id="gaugeInput" type="range" min="1.000" max="2.400" step="0.005" value="1.435">
+            <span class="range-labels"><span>1.000</span><span>声像宽度</span><span>2.400</span></span>
+          </label>
+
+          <label class="control" for="listenerInput">
+            <span class="control-top">
+              <span><b>03</b> 监听点</span>
+              <output id="listenerValue" for="listenerInput">+0.0 <small>m</small></output>
+            </span>
+            <input id="listenerInput" type="range" min="-38" max="38" step="0.5" value="0">
+            <span class="range-labels"><span>−38</span><span>沿轨拖动</span><span>+38</span></span>
+          </label>
+        </div>
+
+        <div class="scene-readout" aria-label="当前声学状态">
+          <div><span>DOPPLER</span><b class="mono" id="dopplerReadout">×1.000</b></div>
+          <div><span>DISTANCE</span><b class="mono" id="distanceReadout">0.0 m</b></div>
+          <div><span>PAN</span><b class="mono" id="panReadout">C</b></div>
+        </div>
+
+        <div class="console-section preset-section">
+          <div class="section-title">
+            <span>参数快照</span><i class="rule"></i>
+            <span class="mono" id="presetState">未保存</span>
+          </div>
+          <div class="button-grid">
+            <button class="btn btn-compact" id="saveBtn" type="button">保存参数</button>
+            <button class="btn btn-compact" id="loadBtn" type="button">重新载入</button>
+          </div>
+        </div>
+
+        <div class="console-section export-section">
+          <div class="section-title">
+            <span>离线导出</span><i class="rule"></i>
+            <span class="mono">WAV / 09.000s</span>
+          </div>
+          <div class="button-grid">
+            <button class="btn btn-accent" id="exportBtn" type="button">检查并导出</button>
+            <button class="btn btn-compact" id="verifyBtn" type="button">重载一致性复验</button>
+          </div>
+          <div class="export-checks" id="exportChecks">
+            <span data-check="silence"><i></i>静音</span>
+            <span data-check="clip"><i></i>削波</span>
+            <span data-check="channel"><i></i>双声道</span>
+            <span data-check="duration"><i></i>时长</span>
+          </div>
+          <div class="export-report mono" id="exportReport">等待首次导出检查</div>
+        </div>
+
+        <div class="console-section probe-section">
+          <div class="section-title">
+            <span>离线声学校验</span><i class="rule"></i>
+            <button class="text-button" id="probeBtn" type="button">运行</button>
+          </div>
+          <div class="probe-row" data-probe="stereo">
+            <i class="probe-led"></i><span>左右声道</span><b class="mono">待测</b>
+          </div>
+          <div class="probe-row" data-probe="spectrum">
+            <i class="probe-led"></i><span>频段响应</span><b class="mono">待测</b>
+          </div>
+          <div class="probe-row" data-probe="beat">
+            <i class="probe-led"></i><span>节拍变化</span><b class="mono">待测</b>
+          </div>
+          <p class="probe-note">校验读取实际渲染 PCM，不采用界面公式。</p>
+        </div>
+      </aside>
+
+      <section class="telemetry" aria-label="实时声学仪表">
+        <article class="meter-card freq-card">
+          <header><span>主频 / 频段</span><i class="live-mark">LIVE</i></header>
+          <div class="meter-main"><b class="mono" id="freqValue">—</b><span>Hz</span></div>
+          <div class="band-bars" id="bandBars">
+            <span><i data-band="low"></i><small>LOW</small></span>
+            <span><i data-band="mid"></i><small>MID</small></span>
+            <span><i data-band="high"></i><small>HIGH</small></span>
+          </div>
+        </article>
+
+        <article class="meter-card stereo-card">
+          <header><span>左右声道</span><i class="live-mark">L / R</i></header>
+          <div class="stereo-values mono">
+            <b id="stereoL">L −∞</b><span id="stereoBalance">C</span><b id="stereoR">R −∞</b>
+          </div>
+          <div class="balance-track"><i></i><em id="balanceNeedle"></em></div>
+          <small class="meter-foot" id="stereoFoot">等待音频输入</small>
+        </article>
+
+        <article class="meter-card latency-card">
+          <header><span>监听延迟</span><i class="live-mark">I/O</i></header>
+          <div class="meter-main"><b class="mono" id="latencyValue">—</b><span>ms</span></div>
+          <div class="convergence" id="convergence">
+            <i></i><span id="convergenceText">等待参数变化</span>
+          </div>
+          <small class="meter-foot mono" id="contextFoot">AudioContext / suspended</small>
+        </article>
+
+        <article class="meter-card peak-card">
+          <header><span>输出峰值</span><i class="live-mark">PK</i></header>
+          <div class="meter-main"><b class="mono" id="peakValue">−∞</b><span>dBFS</span></div>
+          <div class="peak-track"><i id="peakFill"></i><em id="peakLimit"></em></div>
+          <small class="meter-foot" id="peakFoot">安全余量 —</small>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>WEB AUDIO SYNTHESIS · NO SAMPLES</span>
+      <span class="mono">SPACE 暂停 · R 重播 · X 导出</span>
+      <span id="footerState">READY</span>
+    </footer>
+  </div>
+
+  <script src="js/model.js" defer></script>
+  <script src="js/audio.js" defer></script>
+  <script src="js/offline.js" defer></script>
+  <script src="js/visualizer.js" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+</html>
